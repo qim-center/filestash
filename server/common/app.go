@@ -12,4 +12,5 @@ type App struct {
 	Context       context.Context
 	Authorization string
 	Languages     []string
+	// UserInfo      UserInfo
 }

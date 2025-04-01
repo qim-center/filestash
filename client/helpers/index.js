@@ -13,7 +13,7 @@ export {
 export { memory } from "./memory";
 export { prepare } from "./navigate";
 export { invalidate, http_get, http_post, http_delete, http_options } from "./ajax";
-export { prompt, alert, confirm } from "./popup";
+export { change, prompt, alert, confirm } from "./popup";
 export { notify } from "./notify";
 export { gid, randomString } from "./random";
 export { leftPad, format, copyToClipboard, objectGet, nop } from "./common";

@@ -67,6 +67,8 @@ export const Icon = (props) => {
         img = "/assets/icons/share.svg";
     } else if (props.name === "tag") {
         img = "/assets/icons/tag.svg";
+    } else if (props.name === "permissions") {
+        img = "/assets/icons/permissions.svg";
     } else if (props.name === "bucket") {
         img = img_bucket;
     } else if (props.name === "download_white") {

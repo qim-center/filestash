@@ -5,7 +5,7 @@ import { DragSource, DropTarget } from "react-dnd";
 
 import "./thing.scss";
 import { Card, NgIf, Icon, EventEmitter, img_placeholder, Input } from "../../components/";
-import { pathBuilder, basename, filetype, prompt, alert, leftPad, getMimeType, debounce, memory } from "../../helpers/";
+import { pathBuilder, basename, filetype, prompt, alert, change, leftPad, getMimeType, debounce, memory } from "../../helpers/";
 import { Files } from "../../model/";
 import { ShareComponent } from "./share";
 import { TagComponent } from "./tag";
@@ -235,6 +235,23 @@ class ExistingThingComponent extends React.Component {
         )
     }
 
+    onChangePermsRequest() {
+        change.now(
+            this.props.file,
+            this.props.userInfo,
+            (permissions) => {
+                this.setState({icon:"loading"});
+                this.props.emit(
+                    "file.chmod",
+                    pathBuilder(this.props.path, this.props.file.name, this.props.file.type),
+                    permissions,
+                );
+                return Promise.resolve();
+            },
+            () => {}//cancel
+        );
+    }
+
     onShareRequest(filename) {
         alert.now(
             <ShareComponent path={this.props.file.path} type={this.props.file.type} />,
@@ -330,6 +347,7 @@ class ExistingThingComponent extends React.Component {
                             onClickDelete={this.onDeleteRequest.bind(this)}
                             onClickShare={this.onShareRequest.bind(this)}
                             onClickTag={this.onTagRequest.bind(this)}
+                            onClickChangePerms={this.onChangePermsRequest.bind(this)}
                             is_renaming={this.state.is_renaming}
                             can_rename={this.props.metadata.can_rename !== false}
                             can_delete={this.props.metadata.can_delete !== false}
@@ -459,6 +477,11 @@ const ActionButton = (props) => {
         props.onClickTag();
     }
 
+    const onChangePerms = (e) => {
+        e.preventDefault();
+        props.onClickChangePerms();
+    }
+
     return (
         <div className="component_action">
             <NgIf
@@ -494,6 +517,14 @@ const ActionButton = (props) => {
                 <Icon
                     name="share"
                     onClick={onShare}
+                    className="component_updater--icon" />
+            </NgIf>
+            <NgIf
+                type="inline"
+                cond={props.can_delete !== false}>
+                <Icon
+                    name="permissions"
+                    onClick={onChangePerms}
                     className="component_updater--icon" />
             </NgIf>
         </div>

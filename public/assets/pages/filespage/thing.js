@@ -36,19 +36,19 @@ export function init() {
         })(),
     };
 }
-
-const $tmpl = createElement(`
-    <a href="__TEMPLATE__" class="component_thing no-select" draggable="false" data-link>
-        <div class="component_checkbox"><input name="select" type="checkbox"><span class="indicator"></span></div>
-        <img class="component_icon" loading="lazy" draggable="false" src="__TEMPLATE__" alt="directory">
-        <div class="info_extension"><span class="ellipsis"></span></div>
-        <span class="component_filename">
+{/* <span class="component_filename" style="color:red;">
             <span class="file-details"><span class="ellipsis">
                 <span class="component_filesize">(281B)</span>
             </span></span>
         </span>
         <span class="component_datetime"></span>
-        <div class="selectionOverlay"></div>
+        <div class="selectionOverlay"></div> */}
+const $tmpl = createElement(`
+    <a href="__TEMPLATE__" class="component_thing no-select" draggable="false" data-link>
+        <div class="component_checkbox"><input name="select" type="checkbox"><span class="indicator"></span></div>
+        <img class="component_icon" loading="lazy" draggable="false" src="__TEMPLATE__" alt="directory">
+        <div class="info_extension"><span class="ellipsis"></span></div>
+        
     </a>
 `);
 

@@ -14,6 +14,8 @@ class FileSystem {
         this.current_path = null;
     }
 
+
+
     ls(path, show_hidden = false) {
         this.current_path = path;
         this.obs && this.obs.complete();
@@ -36,7 +38,7 @@ class FileSystem {
             }).catch((err) => this.obs.error({ message: err && err.message }));
 
             return () => {
-                keep_pulling_from_http = false;
+                keep_pulling_from_http = true;
             };
         });
     }
@@ -58,6 +60,7 @@ class FileSystem {
                 }, _files);
                 store.permissions = response.permissions;
                 store.results = response.results;
+                store.userInfo = response.userInfo;
 
                 if (_files && _files.results) {
                     store.access_count = _files.access_count;
@@ -95,6 +98,7 @@ class FileSystem {
     }
 
     _ls_from_cache(path, _record_access = false) {
+        console.log("ls from cache");
         return cache.get(cache.FILE_PATH, [currentBackend(), currentShare(), path]).then((response) => {
             if (!response || !response.results) return null;
             if (this.current_path === path) {
@@ -114,6 +118,7 @@ class FileSystem {
                             this.obs && this.obs.next({
                                 status: "ok",
                                 results: response.results,
+                                userInfo: response.userInfo,
                                 permissions: response.permissions,
                             });
                         }
@@ -343,6 +348,18 @@ class FileSystem {
         case "execute_only": return action_execute(true);
         default: return action_prepare().then(action_execute);
         }
+    }
+
+    chmod(path, perms){
+        const url = appendShareToUrl("/api/files/chmod?path=" + prepare(path)+"&perms="+perms);
+        return http_post(url).then(() => {
+            cache.update(cache.FILE_PATH, [currentBackend(), currentShare(), path], (data) => {
+                let filename = path.substring(path.lastIndexOf("/") + 1);
+                let index = data.results.findIndex(x => x.name ===filename);
+                if (data.results[index]) data.results[index].perm = parseInt(perms, 8);
+                console.log(data.results[index]);
+                return data;
+            }, false)}).then(() => this._refresh(path));
     }
 
     mv(from, to) {
