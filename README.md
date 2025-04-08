@@ -44,3 +44,5 @@ only using SFTP, I focused only on that.
 - You see owner and group of the file/folder
 - If you are the owner, you can change the file permissions
 - Get a notification that it worked
+
+![plot](./permissions_dialogue.png)
