@@ -14,8 +14,6 @@ class FileSystem {
         this.current_path = null;
     }
 
-
-
     ls(path, show_hidden = false) {
         this.current_path = path;
         this.obs && this.obs.complete();
@@ -98,7 +96,6 @@ class FileSystem {
     }
 
     _ls_from_cache(path, _record_access = false) {
-        console.log("ls from cache");
         return cache.get(cache.FILE_PATH, [currentBackend(), currentShare(), path]).then((response) => {
             if (!response || !response.results) return null;
             if (this.current_path === path) {

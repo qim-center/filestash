@@ -1,4 +1,4 @@
-import React, { createRef } from "react";
+import React, { createRef, useState } from "react";
 import path from "path";
 import { Link } from "react-router-dom";
 import { DragSource, DropTarget } from "react-dnd";
@@ -351,7 +351,9 @@ class ExistingThingComponent extends React.Component {
                             is_renaming={this.state.is_renaming}
                             can_rename={this.props.metadata.can_rename !== false}
                             can_delete={this.props.metadata.can_delete !== false}
-                            can_share={this.props.metadata.can_share !== false && window.CONFIG.enable_share === true} />
+                            can_share={this.props.metadata.can_share !== false && window.CONFIG.enable_share === true}
+                            filename={this.props.file.path} 
+                            />
                         <div className="selectionOverlay"></div>
                     </Card>
                 </ToggleableLink>
@@ -481,9 +483,22 @@ const ActionButton = (props) => {
         e.preventDefault();
         props.onClickChangePerms();
     }
+    const onCopy = (e) => {
+        e.preventDefault();
+        navigator.clipboard.writeText(props.filename);
+    }
 
     return (
         <div className="component_action">
+            {/* <NgIf
+                type = "inline"
+                cond = {true}>
+                <Icon
+                    name = "copy"
+                    onClick = {onCopy}
+                    className = "component_updater--icon" />
+            </NgIf> */}
+            <CopyIcon filename = {props.filename}/>
             <NgIf
                 type="inline"
                 cond={props.can_rename !== false && props.is_renaming === false}>
@@ -578,6 +593,32 @@ const FileSize = (props) => {
         </NgIf>
     );
 };
+
+class CopyIcon extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {wasCopied:false};
+        
+    }
+
+    render() {
+        const onClick = (e) => {
+            e.preventDefault();
+            navigator.clipboard.writeText(this.props.filename);
+            this.setState({wasCopied:true})
+            setTimeout(() => {this.setState({wasCopied:false});}, 3000);
+        }
+
+        return <NgIf
+                    type = "inline"
+                    cond = {true}>
+                    <Icon
+                        name = {this.state.wasCopied ? "copied" : "copy"}
+                        onClick = {onClick}
+                        className = "component_updater--icon" />
+                </NgIf>
+    }
+}
 
 class Image extends React.Component {
     constructor(props) {

@@ -9,7 +9,6 @@ class SessionManager {
         const shareID = currentShare();
         return http_get("/api/session" + (shareID && `?share=${shareID}`))
             .then((data) => {
-
                 this.authorization = data.result.authorization;
                 return data.result;
             })
