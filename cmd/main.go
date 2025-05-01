@@ -15,10 +15,15 @@ import (
 )
 
 func main() {
-	start(Build(App{}))
+	var (
+		router *mux.Router = mux.NewRouter()
+		app                = App{}
+	)
+	Build(router, app)
+	Run(router, app)
 }
 
-func start(routes *mux.Router) {
+func Run(routes *mux.Router, app App) {
 	// Routes are served via plugins to avoid getting stuck with plain HTTP. The idea is to
 	// support many more protocols in the future: HTTPS, HTTP2, TOR or whatever that sounds
 	// fancy I don't know much when this got written: IPFS, solid, ...
@@ -33,9 +38,13 @@ func start(routes *mux.Router) {
 	InitLogger()
 	InitConfig()
 	InitPluginList(embed.EmbedPluginList)
+	for _, obj := range Hooks.Get.HttpEndpoint() {
+		obj(routes, &app)
+	}
 	for _, fn := range Hooks.Get.Onload() {
 		fn()
 	}
+	CatchAll(routes, app)
 	var wg sync.WaitGroup
 	for _, obj := range Hooks.Get.Starter() {
 		wg.Add(1)

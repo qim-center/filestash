@@ -37,7 +37,7 @@ class ModalComponent extends HTMLElement {
         await loadCSS(import.meta.url, "./modal.css");
     }
 
-    trigger($node, { withButtonsLeft = null, withButtonsRight = null, targetHeight = 0, onQuit = (a) => Promise.resolve(a) }) {
+    trigger($node, { withButtonsLeft = null, withButtonsRight = null, targetHeight = 0, onQuit = (_a, _b) => Promise.resolve() }) {
         const close$ = new rxjs.Subject();
 
         // feature: build the dom
@@ -75,7 +75,7 @@ class ModalComponent extends HTMLElement {
         // feature: closing the modal
         const $body = () => qs($modal, "div > div");
         effect(close$.pipe(
-            rxjs.mergeMap((data) => onQuit(data) || Promise.resolve()),
+            rxjs.mergeMap((data) => onQuit(data, $node) || Promise.resolve()),
             rxjs.tap(() => animate($body(), {
                 time: 200,
                 keyframes: [
