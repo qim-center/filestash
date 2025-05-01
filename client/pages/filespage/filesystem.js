@@ -51,7 +51,8 @@ class FileSystemComponent extends React.PureComponent {
                                                 metadata={this.props.metadata || {}}
                                                 selectableKey={file}
                                                 selected={this.props.selected.indexOf(file.path) !== -1}
-                                                currentSelection={this.props.selected} />
+                                                currentSelection={this.props.selected}
+                                                userInfo = {this.props.userInfo} />
                                         );
                                     }
                                     return null;
@@ -74,6 +75,7 @@ class FileSystemComponent extends React.PureComponent {
 FileSystemComponent.propTypes = {
     path: PropTypes.string.isRequired,
     files: PropTypes.array.isRequired,
+    userInfo: PropTypes.object.isRequired,
     metadata: PropTypes.object.isRequired,
     sort: PropTypes.string.isRequired,
     view: PropTypes.string.isRequired,

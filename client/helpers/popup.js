@@ -54,3 +54,22 @@ const Confirm = function() {
     };
 };
 export const confirm = new Confirm();
+
+const Change = function() {
+    let fn = null;
+
+    return {
+        now: function(file, userInfo, okCallback, cancelCallback) {
+            if (!fn) {
+                return window.setTimeout(() => {
+                    this.now(file, userInfo, okCallback, cancelCallback);
+                }, 50);
+            }
+            fn(file, userInfo, okCallback, cancelCallback);
+        },
+        subscribe: function(_fn) {
+            fn = _fn;
+        },
+    };
+};
+export const change = new Change();

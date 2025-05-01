@@ -24,6 +24,7 @@ type APISuccessResultsWithMetadata struct {
 	Status   string      `json:"status"`
 	Results  interface{} `json:"results"`
 	Metadata interface{} `json:"permissions,omitempty"`
+	UserInfo UserInfo    `json:"userInfo"`
 }
 
 type APIErrorMessage struct {
@@ -86,13 +87,13 @@ func SendSuccessResults(res http.ResponseWriter, data interface{}) {
 	encoder.Encode(APISuccessResults{"ok", data})
 }
 
-func SendSuccessResultsWithMetadata(res http.ResponseWriter, data interface{}, p interface{}) {
+func SendSuccessResultsWithMetadata(res http.ResponseWriter, data interface{}, p interface{}, userInfo UserInfo) {
 	encoder := json.NewEncoder(res)
 	encoder.SetEscapeHTML(false)
 	if shouldIndentResponse(res) {
 		encoder.SetIndent("", IndentSize)
 	}
-	encoder.Encode(APISuccessResultsWithMetadata{"ok", data, p})
+	encoder.Encode(APISuccessResultsWithMetadata{"ok", data, p, userInfo})
 }
 
 func SendErrorResult(res http.ResponseWriter, err error) {

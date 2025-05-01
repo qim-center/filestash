@@ -1,12 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"sync"
 
 	"github.com/gorilla/mux"
 
-	"github.com/mickael-kerjean/filestash"
+	embed "github.com/mickael-kerjean/filestash"
 	. "github.com/mickael-kerjean/filestash/server"
 	. "github.com/mickael-kerjean/filestash/server/common"
 	. "github.com/mickael-kerjean/filestash/server/ctrl"
@@ -32,6 +33,8 @@ func Run(routes *mux.Router, app App) {
 		os.Exit(1)
 		return
 	}
+	fmt.Println(Hooks.Get.Starter())
+
 	InitLogger()
 	InitConfig()
 	InitPluginList(embed.EmbedPluginList)

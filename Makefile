@@ -1,3 +1,6 @@
+run:
+	make all
+	./dist/filestash
 all:
 	make build_init
 	make build_frontend
@@ -9,7 +12,7 @@ build_init:
 
 build_frontend:
 	make build_frontend_old
-	cd public && make compress
+	#cd public && make compress
 
 build_frontend_old:
 	NODE_ENV=production npm run build

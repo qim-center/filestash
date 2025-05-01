@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -19,6 +20,7 @@ type Sftp struct {
 	SSHClient  *ssh.Client
 	SFTPClient *sftp.Client
 	wg         *sync.WaitGroup
+	userInfo   *UserInfo
 }
 
 func init() {
@@ -178,13 +180,56 @@ func (s Sftp) Init(params map[string]string, app *App) (IBackend, error) {
 			return &s, ErrAuthenticationFailed
 		}
 	}
+
+	// Getting user and group ids
+	session, err := client.NewSession()
+	if err != nil {
+		return &s, ErrNotReachable
+	}
+	defer session.Close()
+	id_string, err := session.CombinedOutput("id")
+	if err != nil {
+		return &s, ErrNotReachable
+	}
+
+	processIdOutput := func(output string) (uint32, []uint32, []string) {
+		uid, rest, _ := strings.Cut(output, " ")
+		_, uid, _ = strings.Cut(uid, "=")
+		uid, _, _ = strings.Cut(uid, "(")
+		uid_int64, _ := strconv.ParseUint(uid, 10, 32)
+		uid_int := uint32(uid_int64)
+
+		_, rest, _ = strings.Cut(rest, "groups=")
+		groups := strings.Split(rest, ",")
+
+		var ids []uint32
+		var names []string
+
+		for _, group := range groups {
+			gid_string, name, _ := strings.Cut(group, "(")
+
+			gid_64, _ := strconv.ParseUint(gid_string, 10, 32)
+			gid_int := uint32(gid_64)
+			ids = append(ids, gid_int)
+
+			name = name[:len(name)-1]
+			names = append(names, name)
+		}
+		return uid_int, ids, names
+	}
+
+	id, groupsID, groupsNames := processIdOutput(string(id_string[:]))
+
+	userInfo := UserInfo{UID: id, GroupsID: groupsID, GroupsNames: groupsNames}
+	s.userInfo = &userInfo
+
 	s.SSHClient = client
 
-	session, err := sftp.NewClient(s.SSHClient)
+	sftpclient, err := sftp.NewClient(s.SSHClient)
 	if err != nil {
 		return &s, err
 	}
-	s.SFTPClient = session
+	s.SFTPClient = sftpclient
 	s.wg = new(sync.WaitGroup)
 	s.wg.Add(1)
 	go func() {
@@ -252,6 +297,10 @@ func (b Sftp) LoginForm() Form {
 	}
 }
 
+func (b Sftp) UserInfo() UserInfo {
+	return *b.userInfo
+}
+
 func (b Sftp) Home() (string, error) {
 	cwd, err := b.SFTPClient.Getwd()
 	if err != nil {
@@ -267,6 +316,12 @@ func (b Sftp) Home() (string, error) {
 func (b Sftp) Ls(path string) ([]os.FileInfo, error) {
 	files, err := b.SFTPClient.ReadDir(path)
 	return files, b.err(err)
+}
+
+func (b Sftp) Chmod(path string, permissions int) error {
+	mode := os.FileMode(permissions)
+	err := b.SFTPClient.Chmod(path, mode)
+	return b.err(err)
 }
 
 func (b Sftp) Cat(path string) (io.ReadCloser, error) {

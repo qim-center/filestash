@@ -100,7 +100,6 @@ DataFromMemory.prototype.get = function(type, key) {
 
 DataFromIndexedDB.prototype.update = function(type, key, fn, exact = true) {
     if (type !== FILE_PATH && type !== FILE_CONTENT && type !== FILE_TAG) return Promise.reject();
-
     return this.db.then((db) => {
         const tx = db.transaction(type, "readwrite");
         const store = tx.objectStore(type);
@@ -131,7 +130,6 @@ DataFromMemory.prototype.update = function(type, key, fn, exact = true) {
     if (data === undefined) {
         return Promise.resolve(null);
     }
-
     const k = key.join("_");
     if (exact === true) {
         if (this.data[type][k] !== undefined) this.data[type][k] = fn(data[k]);
