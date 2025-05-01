@@ -32,3 +32,4 @@ only using SFTP, the feature is possible.
 A new action button was added, so that it is also possible to copy the absolute path to a file or directory.
 
 </details>
+
