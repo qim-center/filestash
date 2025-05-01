@@ -3,7 +3,9 @@ This is the [QIM platform](https://platform.qim.dk/) version of Filestash, forke
 
 # Added features
 
-## Change file permissions
+<details>
+
+<summary>Change file permissions</summary>
 
 ### What's going on?
 We were relying on Filestash for some time, however at some point, we got a lot 
@@ -22,3 +24,12 @@ only using SFTP, the feature is possible.
 - Get a notification that it worked
 
 ![plot](./permissions_dialogue.png)
+
+</details>
+<details>
+<summary>Copy file path</summary>
+
+A new action button was added, so that it is also possible to copy the absolute path to a file or directory.
+
+</details>
+
