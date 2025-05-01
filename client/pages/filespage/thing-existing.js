@@ -1,11 +1,11 @@
-import React, { createRef } from "react";
+import React, { createRef, useState } from "react";
 import path from "path";
 import { Link } from "react-router-dom";
 import { DragSource, DropTarget } from "react-dnd";
 
 import "./thing.scss";
 import { Card, NgIf, Icon, EventEmitter, img_placeholder, Input } from "../../components/";
-import { pathBuilder, basename, filetype, prompt, alert, leftPad, getMimeType, debounce, memory } from "../../helpers/";
+import { pathBuilder, basename, filetype, prompt, alert, change, leftPad, getMimeType, debounce, memory, notify } from "../../helpers/";
 import { Files } from "../../model/";
 import { ShareComponent } from "./share";
 import { TagComponent } from "./tag";
@@ -235,6 +235,23 @@ class ExistingThingComponent extends React.Component {
         )
     }
 
+    onChangePermsRequest() {
+        change.now(
+            this.props.file,
+            this.props.userInfo,
+            (permissions) => {
+                this.setState({icon:"loading"});
+                this.props.emit(
+                    "file.chmod",
+                    pathBuilder(this.props.path, this.props.file.name, this.props.file.type),
+                    permissions,
+                );
+                return Promise.resolve();
+            },
+            () => {}//cancel
+        );
+    }
+
     onShareRequest(filename) {
         alert.now(
             <ShareComponent path={this.props.file.path} type={this.props.file.type} />,
@@ -330,10 +347,13 @@ class ExistingThingComponent extends React.Component {
                             onClickDelete={this.onDeleteRequest.bind(this)}
                             onClickShare={this.onShareRequest.bind(this)}
                             onClickTag={this.onTagRequest.bind(this)}
+                            onClickChangePerms={this.onChangePermsRequest.bind(this)}
                             is_renaming={this.state.is_renaming}
                             can_rename={this.props.metadata.can_rename !== false}
                             can_delete={this.props.metadata.can_delete !== false}
-                            can_share={this.props.metadata.can_share !== false && window.CONFIG.enable_share === true} />
+                            can_share={this.props.metadata.can_share !== false && window.CONFIG.enable_share === true}
+                            filename={this.props.file.path} 
+                            />
                         <div className="selectionOverlay"></div>
                     </Card>
                 </ToggleableLink>
@@ -459,15 +479,22 @@ const ActionButton = (props) => {
         props.onClickTag();
     }
 
+    const onChangePerms = (e) => {
+        e.preventDefault();
+        props.onClickChangePerms();
+    }
+
     return (
         <div className="component_action">
+            <CopyIcon filename = {props.filename}/>
             <NgIf
                 type="inline"
                 cond={props.can_rename !== false && props.is_renaming === false}>
                 <Icon
                     name="edit"
                     onClick={onRename}
-                    className="component_updater--icon" />
+                    className="component_updater--icon"
+                    title="Rename" />
             </NgIf>
             {
                 /canary/.test(location.search) ? (
@@ -484,7 +511,8 @@ const ActionButton = (props) => {
                         <Icon
                             name="delete"
                             onClick={onDelete}
-                            className="component_updater--icon" />
+                            className="component_updater--icon"
+                            title = "Delete" />
                     </NgIf>
                 )
             }
@@ -494,7 +522,17 @@ const ActionButton = (props) => {
                 <Icon
                     name="share"
                     onClick={onShare}
-                    className="component_updater--icon" />
+                    className="component_updater--icon"
+                    title = "Share" />
+            </NgIf>
+            <NgIf
+                type="inline"
+                cond={props.can_delete !== false}>
+                <Icon
+                    name="permissions"
+                    onClick={onChangePerms}
+                    className="component_updater--icon"
+                    title = "Change permissions" />
             </NgIf>
         </div>
     );
@@ -547,6 +585,34 @@ const FileSize = (props) => {
         </NgIf>
     );
 };
+
+class CopyIcon extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {wasCopied:false};
+        
+    }
+
+    render() {
+        const onClick = (e) => {
+            e.preventDefault();
+            navigator.clipboard.writeText(this.props.filename);
+            this.setState({wasCopied:true})
+            setTimeout(() => {this.setState({wasCopied:false});}, 3000);
+            notify.send(t("Path copied: {{VALUE}}", this.props.filename), "success");
+        }
+
+        return <NgIf
+                    type = "inline"
+                    cond = {true}>
+                    <Icon
+                        name = {this.state.wasCopied ? "copied" : "copy"}
+                        onClick = {onClick}
+                        className = "component_updater--icon"
+                        title = "Copy absolute path" />
+                </NgIf>
+    }
+}
 
 class Image extends React.Component {
     constructor(props) {

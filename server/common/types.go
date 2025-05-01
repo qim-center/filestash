@@ -11,6 +11,7 @@ import (
 type IBackend interface {
 	Init(params map[string]string, app *App) (IBackend, error)
 	Ls(path string) ([]os.FileInfo, error)
+	Chmod(path string, permissions int) error
 	Cat(path string) (io.ReadCloser, error)
 	Mkdir(path string) error
 	Rm(path string) error
@@ -18,6 +19,7 @@ type IBackend interface {
 	Save(path string, file io.Reader) error
 	Touch(path string) error
 	LoginForm() Form
+	UserInfo() UserInfo
 }
 
 type IAuthentication interface {
@@ -64,6 +66,12 @@ type IAuditPlugin interface {
 type AuditQueryResult struct {
 	Form       *Form  `json:"form"`
 	RenderHTML string `json:"render"`
+}
+
+type UserInfo struct {
+	UID         uint32   `json:"uid"`
+	GroupsID    []uint32 `json:"gids"`
+	GroupsNames []string `json:"gnames"`
 }
 
 type File struct {

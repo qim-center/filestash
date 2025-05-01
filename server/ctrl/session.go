@@ -21,10 +21,11 @@ import (
 )
 
 type Session struct {
-	Home          *string `json:"home,omitempty"`
-	IsAuth        bool    `json:"is_authenticated"`
-	Backend       string  `json:"backendID"`
-	Authorization string  `json:"authorization,omitempty"`
+	Home          *string  `json:"home,omitempty"`
+	IsAuth        bool     `json:"is_authenticated"`
+	Backend       string   `json:"backendID"`
+	Authorization string   `json:"authorization,omitempty"`
+	UserInfo      UserInfo `json:"user_info"`
 }
 
 func SessionGet(ctx *App, res http.ResponseWriter, req *http.Request) {
@@ -42,6 +43,8 @@ func SessionGet(ctx *App, res http.ResponseWriter, req *http.Request) {
 	} else if ctx.Share.Id != "" {
 		home = "/"
 	}
+
+	r.UserInfo = ctx.Backend.UserInfo()
 	r.IsAuth = true
 	r.Home = NewString(home)
 	r.Backend = Hash(GenerateID(ctx.Session)+ctx.Session["path"], 20)

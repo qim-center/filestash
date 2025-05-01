@@ -45,6 +45,9 @@ func (b Nothing) Init(params map[string]string, app *App) (IBackend, error) {
 func (b Nothing) Ls(path string) ([]os.FileInfo, error) {
 	return []os.FileInfo{}, nil
 }
+func (b Nothing) Chmod(from string, permissions int) error {
+	return ErrNotImplemented
+}
 func (b Nothing) Cat(path string) (io.ReadCloser, error) {
 	return NewReadCloserFromReader(strings.NewReader("")), ErrNotImplemented
 }
@@ -73,4 +76,8 @@ func (b Nothing) LoginForm() Form {
 			},
 		},
 	}
+}
+
+func (b Nothing) UserInfo() UserInfo {
+	return UserInfo{}
 }

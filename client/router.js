@@ -10,7 +10,7 @@ import {
 } from "./helpers/";
 import {
     ModalPrompt, ModalAlert, ModalConfirm, Notification, UploadQueue,
-    LoadingPage,
+    LoadingPage, ModalChange
 } from "./components/";
 
 
@@ -37,7 +37,7 @@ export default function AppRouter() {
                     <Route component={NotFoundPage} />
                 </Switch>
             </BrowserRouter>
-            <ModalPrompt /> <ModalAlert /> <ModalConfirm />
+            <ModalPrompt /> <ModalAlert /> <ModalConfirm /> <ModalChange />
             <Notification /> <UploadQueue/>
         </div>
     );

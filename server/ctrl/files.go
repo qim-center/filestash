@@ -18,6 +18,7 @@ import (
 
 	. "github.com/mickael-kerjean/filestash/server/common"
 	"github.com/mickael-kerjean/filestash/server/model"
+	"github.com/pkg/sftp"
 )
 
 type FileInfo struct {
@@ -25,6 +26,9 @@ type FileInfo struct {
 	Type string `json:"type"`
 	Size int64  `json:"size"`
 	Time int64  `json:"time"`
+	Perm uint32 `json:"perm"`
+	Uid  uint32 `json:"uid"`
+	Gid  uint32 `json:"gid"`
 }
 
 var (
@@ -144,7 +148,10 @@ func FileLs(ctx *App, res http.ResponseWriter, req *http.Request) {
 	etagger := fnv.New32()
 	etagger.Write([]byte(path + strconv.Itoa(len(entries))))
 	for i := 0; i < len(entries); i++ {
+
+		stat, _ := entries[i].Sys().(*sftp.FileStat)
 		name := entries[i].Name()
+
 		files[i] = FileInfo{
 			Name: name,
 			Size: entries[i].Size(),
@@ -165,6 +172,10 @@ func FileLs(ctx *App, res http.ResponseWriter, req *http.Request) {
 				}
 				return "directory"
 			}(entries[i].Mode()),
+
+			Perm: uint32(entries[i].Mode().Perm()),
+			Uid:  stat.UID,
+			Gid:  stat.GID,
 		}
 	}
 
@@ -174,7 +185,7 @@ func FileLs(ctx *App, res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusNotModified)
 		return
 	}
-	SendSuccessResultsWithMetadata(res, files, perms)
+	SendSuccessResultsWithMetadata(res, files, perms, ctx.Backend.UserInfo())
 }
 
 func FileCat(ctx *App, res http.ResponseWriter, req *http.Request) {
@@ -646,6 +657,19 @@ func FileMv(ctx *App, res http.ResponseWriter, req *http.Request) {
 	err = ctx.Backend.Mv(from, to)
 	if err != nil {
 		Log.Debug("mv::backend '%s'", err.Error())
+		SendErrorResult(res, err)
+		return
+	}
+	SendSuccessResult(res, nil)
+}
+
+func FileChmod(ctx *App, res http.ResponseWriter, req *http.Request) {
+	path, err := PathBuilder(ctx, req.URL.Query().Get("path"))
+	mode_str := req.URL.Query().Get("perms")
+	mode, _ := strconv.ParseInt(mode_str, 8, 32)
+	err = ctx.Backend.Chmod(path, int(mode))
+	if err != nil {
+		Log.Debug("rm::backend '%s'", err.Error())
 		SendErrorResult(res, err)
 		return
 	}

@@ -8,6 +8,7 @@ import { Files, Tags } from "../model/";
 import {
     sort, onCreate, onRename, onMultiRename, onDelete, onMultiDelete,
     onMultiDownload, onUpload, onSearch,
+    onChmod,
 } from "./filespage.helper";
 import { NgIf, NgShow, Loader, EventReceiver, LoggedInOnly, ErrorPage } from "../components/";
 import { notify, settings_get, settings_put } from "../helpers/";
@@ -15,6 +16,7 @@ import { BreadCrumb, FileSystem, FrequentlyAccess, Submenu, Sidebar } from "./fi
 import { MobileFileUpload } from "./filespage/filezone";
 import InfiniteScroll from "react-infinite-scroller";
 import { t } from "../locales/";
+// import { userInfo } from "os";
 
 const PAGE_NUMBER_INIT = 2;
 const LOAD_PER_SCROLL = 48;
@@ -39,6 +41,7 @@ export class FilesPageComponent extends React.Component {
             show_hidden: settings_get("filespage_show_hidden") || CONFIG["display_hidden"],
             view: settings_get("filespage_view") || CONFIG["default_view"] || "grid",
             is_search: false,
+            userInfo: null,
             files: [],
             selected: [],
             permissions: null,
@@ -73,6 +76,7 @@ export class FilesPageComponent extends React.Component {
         this.props.subscribe("file.download.multiple", onMultiDownload.bind(this));
         this.props.subscribe("file.refresh", this.onRefresh.bind(this));
         this.props.subscribe("file.select", this.toggleSelect.bind(this));
+        this.props.subscribe("file.chmod", onChmod.bind(this));
         window.addEventListener("keydown", this.shortcut);
     }
 
@@ -142,6 +146,7 @@ export class FilesPageComponent extends React.Component {
                 selected: [],
                 loading: false,
                 is_search: false,
+                userInfo: this.state.userInfo ? this.state.userInfo : res.userInfo,
                 page_number: function() {
                     if (this.state.path === LAST_PAGE_PARAMS.path) {
                         return LAST_PAGE_PARAMS.page_number;
@@ -313,10 +318,12 @@ export class FilesPageComponent extends React.Component {
                                             path={this.state.path} sort={this.state.sort}
                                             view={this.state.view} selected={this.state.selected}
                                             files={this.state.files.slice(0, this.state.page_number * LOAD_PER_SCROLL)}
+                                            userInfo = {this.state.userInfo}
                                             isSearch={this.state.is_search}
                                             metadata={this.state.permissions || {}}
                                             onSort={this.onSort.bind(this)}
-                                            onView={this.onView.bind(this)} />
+                                            onView={this.onView.bind(this)}
+                                             />
                                     </NgIf>
                                 </NgShow>
                             </InfiniteScroll>

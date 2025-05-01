@@ -30,6 +30,7 @@ export async function navigate(href) {
 
 export function currentRoute(r, notFoundRoute) {
     const currentRoute = fromHref(window.location.pathname);
+    console.log(currentRoute);
     for (const routeKey in r) {
         if (new RegExp("^" + routeKey + "$").test(currentRoute)) {
             return r[routeKey];

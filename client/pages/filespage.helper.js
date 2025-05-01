@@ -134,6 +134,14 @@ export const onDelete = function(path, type) {
         .catch((err) => notify.send(err, "error"));
 };
 
+export const onChmod = function(path, permissions) {
+    return Files.chmod(path, permissions
+    ).then(() => notify.send(
+        t("Permissions of file {{VALUE}} were changed", Path.basename(path)), "success"
+        )
+    ).catch((err) => notify.send(err, "error"));
+}
+
 export const onMultiDelete = function(arrOfPath) {
     return Promise.all(arrOfPath.map((p) => Files.rm(p)))
         .then(() => notify.send(t("All done!"), "success"))

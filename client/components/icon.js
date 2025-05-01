@@ -67,6 +67,12 @@ export const Icon = (props) => {
         img = "/assets/icons/share.svg";
     } else if (props.name === "tag") {
         img = "/assets/icons/tag.svg";
+    } else if (props.name === "permissions") {
+        img = "/assets/icons/permissions.svg";
+    } else if (props.name === "copy") {
+        img = "/assets/icons/copy.svg";
+    } else if (props.name === "copied") {
+        img = "/assets/icons/copied.svg";
     } else if (props.name === "bucket") {
         img = img_bucket;
     } else if (props.name === "download_white") {
@@ -164,6 +170,8 @@ export const Icon = (props) => {
             style={props.style}
             onClick={props.onClick}
             src={img}
-            alt={props.name}/>
+            alt={props.name}
+            title={props.title}
+            />
     );
 };
