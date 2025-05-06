@@ -5,7 +5,7 @@ import { DragSource, DropTarget } from "react-dnd";
 
 import "./thing.scss";
 import { Card, NgIf, Icon, EventEmitter, img_placeholder, Input } from "../../components/";
-import { pathBuilder, basename, filetype, prompt, alert, change, leftPad, getMimeType, debounce, memory } from "../../helpers/";
+import { pathBuilder, basename, filetype, prompt, alert, change, leftPad, getMimeType, debounce, memory, notify } from "../../helpers/";
 import { Files } from "../../model/";
 import { ShareComponent } from "./share";
 import { TagComponent } from "./tag";
@@ -490,14 +490,6 @@ const ActionButton = (props) => {
 
     return (
         <div className="component_action">
-            {/* <NgIf
-                type = "inline"
-                cond = {true}>
-                <Icon
-                    name = "copy"
-                    onClick = {onCopy}
-                    className = "component_updater--icon" />
-            </NgIf> */}
             <CopyIcon filename = {props.filename}/>
             <NgIf
                 type="inline"
@@ -607,6 +599,7 @@ class CopyIcon extends React.Component {
             navigator.clipboard.writeText(this.props.filename);
             this.setState({wasCopied:true})
             setTimeout(() => {this.setState({wasCopied:false});}, 3000);
+            notify.send(t("Copied path: {{VALUE}}", this.props.filename), "success");
         }
 
         return <NgIf
