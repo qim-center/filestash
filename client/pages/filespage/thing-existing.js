@@ -6,6 +6,7 @@ import { DragSource, DropTarget } from "react-dnd";
 import "./thing.scss";
 import { Card, NgIf, Icon, EventEmitter, img_placeholder, Input } from "../../components/";
 import { pathBuilder, basename, filetype, prompt, alert, change, leftPad, getMimeType, debounce, memory, notify } from "../../helpers/";
+
 import { Files } from "../../model/";
 import { ShareComponent } from "./share";
 import { TagComponent } from "./tag";
@@ -497,7 +498,8 @@ const ActionButton = (props) => {
                 <Icon
                     name="edit"
                     onClick={onRename}
-                    className="component_updater--icon" />
+                    className="component_updater--icon"
+                    title="Rename" />
             </NgIf>
             {
                 /canary/.test(location.search) ? (
@@ -514,7 +516,8 @@ const ActionButton = (props) => {
                         <Icon
                             name="delete"
                             onClick={onDelete}
-                            className="component_updater--icon" />
+                            className="component_updater--icon"
+                            title = "Delete" />
                     </NgIf>
                 )
             }
@@ -524,7 +527,17 @@ const ActionButton = (props) => {
                 <Icon
                     name="share"
                     onClick={onShare}
-                    className="component_updater--icon" />
+                    className="component_updater--icon"
+                    title = "Share" />
+            </NgIf>
+            <NgIf
+                type="inline"
+                cond={props.can_delete !== false}>
+                <Icon
+                    name="permissions"
+                    onClick={onChangePerms}
+                    className="component_updater--icon"
+                    title = "Change permissions" />
             </NgIf>
             <NgIf
                 type="inline"
@@ -600,6 +613,7 @@ class CopyIcon extends React.Component {
             this.setState({wasCopied:true})
             setTimeout(() => {this.setState({wasCopied:false});}, 3000);
             notify.send(t("Copied path: {{VALUE}}", this.props.filename), "success");
+
         }
 
         return <NgIf
@@ -608,7 +622,9 @@ class CopyIcon extends React.Component {
                     <Icon
                         name = {this.state.wasCopied ? "copied" : "copy"}
                         onClick = {onClick}
-                        className = "component_updater--icon" />
+
+                        className = "component_updater--icon"
+                        title = "Copy absolute path" />
                 </NgIf>
     }
 }

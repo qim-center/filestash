@@ -6,7 +6,7 @@ import {
     map, mapTo, filter, mergeMap, EMPTY, empty,
     switchMapTo, switchMap,
     BehaviorSubject, Subject, ReplaySubject,
-    pipe, share, toArray, distinctUntilChanged, from,
+    pipe, share, toArray, distinctUntilChanged, from, finalize,
     combineLatest, shareReplay, race, repeat, interval, merge,
     debounceTime, debounce, delay, concatMap, distinct, scan, throwError,
     zip, animationFrames, retry, forkJoin, skip, takeUntil, timer,
@@ -42,6 +42,7 @@ declare const rxjs: {
     map: typeof map,
     mapTo: typeof mapTo,
     filter: typeof filter,
+    finalize: typeof finalize,
     mergeMap: typeof mergeMap,
     switchMapTo: typeof switchMapTo,
     switchMap: typeof switchMap,
@@ -74,6 +75,6 @@ export function stateMutation($node: HTMLElement, attr: string);
 
 export function preventDefault(): typeof tap;
 
-export function onClick($node: HTMLElement): ReturnType<typeof fromEvent>;
+export function onClick($node: HTMLElement,  opts?: { preventDefault?: boolean }): ReturnType<typeof fromEvent>;
 
 export function onLoad($node: HTMLElement): void;
