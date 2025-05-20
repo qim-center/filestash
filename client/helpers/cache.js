@@ -69,7 +69,6 @@ DataFromMemory.prototype._init = function() {
  */
 DataFromIndexedDB.prototype.get = function(type, key) {
     if (type !== FILE_PATH && type !== FILE_CONTENT && type !== FILE_TAG) return Promise.reject();
-
     return this.db.then((db) => {
         const tx = db.transaction(type, "readonly");
         const store = tx.objectStore(type);
@@ -84,7 +83,6 @@ DataFromIndexedDB.prototype.get = function(type, key) {
 };
 DataFromMemory.prototype.get = function(type, key) {
     if (type !== FILE_PATH && type !== FILE_CONTENT && type !== FILE_TAG) return Promise.reject();
-
     const data = this.data[type] || null;
     if (data === null) {
         return Promise.resolve(null);
@@ -125,7 +123,6 @@ DataFromIndexedDB.prototype.update = function(type, key, fn, exact = true) {
 
 DataFromMemory.prototype.update = function(type, key, fn, exact = true) {
     if (type !== FILE_PATH && type !== FILE_CONTENT && type !== FILE_TAG) return Promise.reject();
-
     const data = this.data[type];
     if (data === undefined) {
         return Promise.resolve(null);
@@ -135,7 +132,8 @@ DataFromMemory.prototype.update = function(type, key, fn, exact = true) {
         if (this.data[type][k] !== undefined) this.data[type][k] = fn(data[k]);
     } else {
         for (const _k in data) {
-            if (_k.indexOf(k) === 0) {
+            // I switched k and _k, I dont understand why they were in the opposite order when checking for index
+            if (k.indexOf(_k) === 0) {
                 this.data[type][_k] = fn(data[_k]);
             }
         }

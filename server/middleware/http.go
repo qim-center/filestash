@@ -2,19 +2,21 @@ package middleware
 
 import (
 	"fmt"
-	. "github.com/mickael-kerjean/filestash/server/common"
-	"golang.org/x/time/rate"
 	"net/http"
 	"net/url"
 	"path/filepath"
 	"strings"
+
+	. "github.com/mickael-kerjean/filestash/server/common"
+	"golang.org/x/time/rate"
 )
 
 func ApiHeaders(fn HandlerFunc) HandlerFunc {
 	return HandlerFunc(func(ctx *App, res http.ResponseWriter, req *http.Request) {
 		header := res.Header()
 		header.Set("Content-Type", "application/json")
-		header.Set("Cache-Control", "no-cache")
+		header.Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		header.Set("Pragma", "no-cache")
 		authHeader := req.Header.Get("Authorization")
 		if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
 			header.Set("X-Request-ID", GenerateRequestID("API"))

@@ -491,15 +491,6 @@ const ActionButton = (props) => {
 
     return (
         <div className="component_action">
-            {/* <NgIf
-                type = "inline"
-                cond = {true}>
-                <Icon
-                    name = "copy"
-                    onClick = {onCopy}
-                    className = "component_updater--icon" />
-            </NgIf> */}
-
             <CopyIcon filename = {props.filename}/>
             <NgIf
                 type="inline"
@@ -621,8 +612,8 @@ class CopyIcon extends React.Component {
             navigator.clipboard.writeText(this.props.filename);
             this.setState({wasCopied:true})
             setTimeout(() => {this.setState({wasCopied:false});}, 3000);
+            notify.send(t("Copied path: {{VALUE}}", this.props.filename), "success");
 
-            notify.send(t("Path copied: {{VALUE}}", this.props.filename), "success");
         }
 
         return <NgIf
