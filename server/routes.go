@@ -16,11 +16,8 @@ import (
 	. "github.com/mickael-kerjean/filestash/server/middleware"
 )
 
-func Build(a App) *mux.Router {
-	var (
-		r           *mux.Router = mux.NewRouter()
-		middlewares []Middleware
-	)
+func Build(r *mux.Router, a App) {
+	var middlewares []Middleware
 
 	// API for Session
 	session := r.PathPrefix(WithBase("/api/session")).Subrouter()
@@ -79,7 +76,7 @@ func Build(a App) *mux.Router {
 
 	// Webdav server / Shared Link
 	middlewares = []Middleware{IndexHeaders, SecureHeaders, PluginInjector}
-	if os.Getenv("CANARY") == "" { // TODO: remove once migration is done
+	if os.Getenv("LEGACY") == "true" { // TODO: remove once migration is done
 		r.HandleFunc(WithBase("/s/{share}"), NewMiddlewareChain(LegacyIndexHandler, middlewares, a)).Methods("GET")
 	} else {
 		r.HandleFunc(WithBase("/s/{share}"), NewMiddlewareChain(ServeFrontofficeHandler, middlewares, a)).Methods("GET")
@@ -95,7 +92,7 @@ func Build(a App) *mux.Router {
 	r.HandleFunc(WithBase("/api/plugin"), NewMiddlewareChain(PluginExportHandler, append(middlewares, PublicCORS), a)).Methods("GET", "OPTIONS")
 	r.HandleFunc(WithBase("/api/config"), NewMiddlewareChain(PublicConfigHandler, append(middlewares, PublicCORS), a)).Methods("GET", "OPTIONS")
 	middlewares = []Middleware{StaticHeaders, SecureHeaders, PublicCORS, PluginInjector}
-	if os.Getenv("CANARY") == "" { // TODO: remove after migration is done
+	if os.Getenv("LEGACY") == "true" { // TODO: remove after migration is done
 		r.PathPrefix(WithBase("/assets")).Handler(http.HandlerFunc(NewMiddlewareChain(LegacyStaticHandler("/"), middlewares, a))).Methods("GET", "OPTIONS")
 		r.HandleFunc(WithBase("/favicon.ico"), NewMiddlewareChain(LegacyStaticHandler("/assets/logo/"), middlewares, a)).Methods("GET")
 		r.HandleFunc(WithBase("/sw_cache.js"), NewMiddlewareChain(LegacyStaticHandler("/assets/worker/"), middlewares, a)).Methods("GET")
@@ -122,16 +119,17 @@ func Build(a App) *mux.Router {
 		initDebugRoutes(r)
 	}
 	initPluginsRoutes(r, &a)
+}
 
-	middlewares = []Middleware{SecureHeaders, PluginInjector}
+func CatchAll(r *mux.Router, a App) {
+	middlewares := []Middleware{SecureHeaders, PluginInjector}
 	r.PathPrefix(WithBase("/admin")).Handler(http.HandlerFunc(NewMiddlewareChain(ServeBackofficeHandler, middlewares, a))).Methods("GET")
 	middlewares = []Middleware{IndexHeaders, SecureHeaders, PluginInjector}
-	if os.Getenv("CANARY") == "" { // TODO: remove once migration is done
+	if os.Getenv("LEGACY") == "true" { // TODO: remove once migration is done
 		r.PathPrefix("/").Handler(http.HandlerFunc(NewMiddlewareChain(LegacyIndexHandler, middlewares, a))).Methods("GET", "POST")
 	} else {
 		r.PathPrefix("/").Handler(http.HandlerFunc(NewMiddlewareChain(ServeFrontofficeHandler, middlewares, a))).Methods("GET", "POST")
 	}
-	return r
 }
 
 func initDebugRoutes(r *mux.Router) {
@@ -166,10 +164,6 @@ func initDebugRoutes(r *mux.Router) {
 }
 
 func initPluginsRoutes(r *mux.Router, a *App) {
-	// Endpoints handle by plugins
-	for _, obj := range Hooks.Get.HttpEndpoint() {
-		obj(r, a)
-	}
 	// frontoffice overrides: it is the mean by which plugin can interact with the frontoffice
 	for _, obj := range Hooks.Get.FrontendOverrides() {
 		r.HandleFunc(obj, func(res http.ResponseWriter, req *http.Request) {
