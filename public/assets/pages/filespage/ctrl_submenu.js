@@ -26,6 +26,7 @@ import { currentPath, extractPath } from "./helper.js";
 
 import { rm as rm$, mv as mv$ } from "./model_files.js";
 import { rm as rmVL, mv as mvVL, withVirtualLayer } from "./model_virtual_layer.js";
+import Notification from "../../components/notification.js";
 
 const modalOpt = {
     withButtonsRight: t("OK"),
@@ -108,7 +109,7 @@ function componentLeft(render, { $scroll, getSelectionLength$ }) {
         rxjs.filter((l) => l === 1),
         rxjs.map(() => render(createFragment(`
             <a target="_blank" ${generateLinkAttributes(expandSelection())}><button data-action="download" title="${t("Download")}">
-                ${t("Download")}
+                ${t("Download FIle")}
             </button></a>
             <button data-action="delete"${toggleDependingOnPermission(currentPath(), "delete")} title="${t("Remove")}">
                 ${t("Remove")}
@@ -118,6 +119,9 @@ function componentLeft(render, { $scroll, getSelectionLength$ }) {
             </button>
             <button data-action="share" title="${t("Share")}" class="${(getConfig("enable_share") && !new URLSearchParams(location.search).has("share")) ? "" : "hidden"}">
                 ${t("Share")}
+            </button>
+            <button data-action="copy_path" title="${t("Copy path")}">
+                ${t("Copy path")}
             </button>
             <button data-action="tag" title="${t("Tag")}" class="${new URLSearchParams(location.search).get("canary") === "true" ? "" : "hidden"}">
                 ${t("Tag")}
@@ -135,6 +139,13 @@ function componentLeft(render, { $scroll, getSelectionLength$ }) {
                     withButtonsRight: null,
                     withButtonsLeft: null,
                 }), { path: expandSelection()[0].path });
+            })),
+            onClick(qs($page, `[data-action="copy_path"]`), { preventDefault: true }).pipe(rxjs.tap(() => {
+                const path = expandSelection()[0].path;
+                navigator.clipboard.writeText(path);
+                Notification.success(path + " copied to clipboard");
+
+                
             })),
             onClick(qs($page, `[data-action="tag"]`)).pipe(rxjs.tap(() => {
                 componentTag(createModal({
