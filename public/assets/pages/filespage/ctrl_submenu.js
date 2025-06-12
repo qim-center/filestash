@@ -7,6 +7,7 @@ import { qs, qsa } from "../../lib/dom.js";
 import { get as getConfig } from "../../model/config.js";
 import { loadCSS } from "../../helpers/loader.js";
 import t from "../../locales/index.js";
+import fscache from "./cache.js";
 
 import "../../components/dropdown.js";
 import "../../components/icon.js";
@@ -16,6 +17,7 @@ import componentShare from "./modal_share.js";
 import componentTag from "./modal_tag.js";
 import componentRename from "./modal_rename.js";
 import componentDelete from "./modal_delete.js";
+import componentChmod from "./modal_chmod.js";
 
 import { getSelection$, clearSelection, lengthSelection, expandSelection } from "./state_selection.js";
 import { getAction$, setAction } from "./state_newthing.js";
@@ -24,8 +26,8 @@ import { clearCache } from "./cache.js";
 import { getPermission, calculatePermission } from "./model_acl.js";
 import { currentPath, extractPath } from "./helper.js";
 
-import { rm as rm$, mv as mv$ } from "./model_files.js";
-import { rm as rmVL, mv as mvVL, withVirtualLayer } from "./model_virtual_layer.js";
+import { rm as rm$, mv as mv$, chmod as chmod$ } from "./model_files.js";
+import { rm as rmVL, mv as mvVL, chmod as chmodVL, withVirtualLayer } from "./model_virtual_layer.js";
 import Notification from "../../components/notification.js";
 
 const modalOpt = {
@@ -41,6 +43,11 @@ const rm = (...paths) => withVirtualLayer(
 const mv = (from, to) => withVirtualLayer(
     mv$(from, to),
     mvVL(from, to),
+);
+
+const chmod = (path, permissions) => withVirtualLayer(
+    chmod$(path, permissions),
+    chmodVL(path, permissions),
 );
 
 export default async function(render) {
@@ -123,6 +130,9 @@ function componentLeft(render, { $scroll, getSelectionLength$ }) {
             <button data-action="copy_path" title="${t("Copy path")}">
                 ${t("Copy path")}
             </button>
+            <button data-action="change_permissions"${toggleDependingOnPermission(currentPath(), "delete")} title="${t("Change permissions")}">
+                ${t("Change permissions")}
+            </button>
             <button data-action="tag" title="${t("Tag")}" class="${new URLSearchParams(location.search).get("canary") === "true" ? "" : "hidden"}">
                 ${t("Tag")}
             </button>
@@ -143,9 +153,33 @@ function componentLeft(render, { $scroll, getSelectionLength$ }) {
             onClick(qs($page, `[data-action="copy_path"]`), { preventDefault: true }).pipe(rxjs.tap(() => {
                 const path = expandSelection()[0].path;
                 navigator.clipboard.writeText(path);
-                Notification.success(path + " copied to clipboard");
+                Notification.success(path + " copied to clipboard");  
+            })),
+            onClick(qs($page, `[data-action="change_permissions"]`)).pipe(rxjs.mergeMap(() => {
+                const path = expandSelection()[0].path;
+                const [basepath, name] = extractPath(path);
+                return rxjs.forkJoin({
+                    file: rxjs.from(fscache().get(basepath)).pipe(
+                        rxjs.map((object) => {
+                            return object.files.find(f => f.name === name);
+                        })
+                    ),
+                    user_info: rxjs.from(fscache().getUser())
+                }).pipe(
+                    rxjs.mergeMap(({ file, user_info }) => {
+                        return rxjs.from(componentChmod(
+                            createModal(modalOpt),
+                            basename(path.replace(/\/$/, "")),
+                            file,
+                            user_info
+                        ));
+                    }),
+                    rxjs.mergeMap(perm => {
+                        clearSelection();
+                        // clearCache(basepath);
+                        return chmod(path, String(perm));
+                    }));
 
-                
             })),
             onClick(qs($page, `[data-action="tag"]`)).pipe(rxjs.tap(() => {
                 componentTag(createModal({

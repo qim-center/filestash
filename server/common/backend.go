@@ -48,6 +48,9 @@ func (b Nothing) Ls(path string) ([]os.FileInfo, error) {
 func (b Nothing) Cat(path string) (io.ReadCloser, error) {
 	return NewReadCloserFromReader(strings.NewReader("")), ErrNotImplemented
 }
+func (b Nothing) Chmod(path string, perms int) error {
+	return ErrNotImplemented
+}
 func (b Nothing) Mkdir(path string) error {
 	return ErrNotImplemented
 }

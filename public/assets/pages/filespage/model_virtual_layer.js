@@ -397,7 +397,7 @@ export function chmod(path, permissions) {
                 fn: (file) => {
                     if (file.name === name){
                             file.loading = true;
-                            file.permissions = permissions;
+                            file.perms = permissions;
                             type = file.type;
                     }
                     return file;
@@ -410,7 +410,8 @@ export function chmod(path, permissions) {
          * @override
          */
         async afterSuccess() {
-            await fscache().remove(path, false);
+            onDestroy(() => statePop(mutationFiles$, basepath, name));
+            statePop(virtualFiles$, basepath, name);
             stateAdd(mutationFiles$, basepath, {
                 name: name,
                 fn: (file) => {
@@ -424,14 +425,14 @@ export function chmod(path, permissions) {
                 return {
                     files: files.map((file) => {
                         if (file.name === name){
-                            file.permissions = permissions;
+                            file.perms = parseInt(permissions, 8);
                         }
                         return file;
                     }),
                     ...rest,
                 };
             });
-            hooks.mutation.emit({ op: "chmod", path: basepath });
+            hooks.mutation.emit({ op: "chmod", path: basepath });  
         }
 
         /**

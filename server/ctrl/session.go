@@ -106,7 +106,6 @@ func SessionGet(ctx *App, res http.ResponseWriter, req *http.Request) {
 		r.Authorization = ctx.Authorization
 	}
 	r.UserInfo, _ = GetUserInfo(ctx)
-	fmt.Println((r.UserInfo))
 	SendSuccessResult(res, r)
 }
 
