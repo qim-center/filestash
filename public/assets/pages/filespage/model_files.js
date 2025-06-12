@@ -76,6 +76,15 @@ export const mv = (from, to) => ajax({
     handleError,
 );
 
+export const chmod = (path, permissions) => ajax({
+    url: withURLParams(`api/files/chmod?path=${encodeURIComponent(path)}&perms=${permissions}`),
+    method: "POST",
+    responseType: "json",
+}).pipe(
+    handleSuccess(t("Changed permissions of '{{VALUE}}'", basename(trimDirectorySuffix(path)))),
+    handleError,
+);
+
 export const save = () => rxjs.of(null).pipe(rxjs.delay(1000));
 
 export const ls = (path) => {

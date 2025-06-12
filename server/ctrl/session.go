@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -16,15 +17,71 @@ import (
 	. "github.com/mickael-kerjean/filestash/server/common"
 	"github.com/mickael-kerjean/filestash/server/middleware"
 	"github.com/mickael-kerjean/filestash/server/model"
+	"github.com/mickael-kerjean/filestash/server/plugin/plg_backend_sftp"
 
 	"github.com/gorilla/mux"
 )
 
+type UserInfo struct {
+	UID         uint32   `json:"uid"`
+	GroupsID    []uint32 `json:"gids"`
+	GroupsNames []string `json:"gnames"`
+}
+
 type Session struct {
-	Home          *string `json:"home,omitempty"`
-	IsAuth        bool    `json:"is_authenticated"`
-	Backend       string  `json:"backendID"`
-	Authorization string  `json:"authorization,omitempty"`
+	Home          *string  `json:"home,omitempty"`
+	IsAuth        bool     `json:"is_authenticated"`
+	Backend       string   `json:"backendID"`
+	Authorization string   `json:"authorization,omitempty"`
+	UserInfo      UserInfo `json:"user_info"`
+}
+
+func GetUserInfo(ctx *App) (UserInfo, error) {
+
+	// Getting user and group ids
+	if backend, ok := ctx.Backend.(*plg_backend_sftp.Sftp); ok {
+		client := backend.SSHClient
+		session, err := client.NewSession()
+		if err != nil {
+			return UserInfo{}, ErrNotReachable
+		}
+		defer session.Close()
+		id_string, err := session.CombinedOutput("id")
+		if err != nil {
+			return UserInfo{}, ErrNotReachable
+		}
+
+		processIdOutput := func(output string) (uint32, []uint32, []string) {
+			uid, rest, _ := strings.Cut(output, " ")
+			_, uid, _ = strings.Cut(uid, "=")
+			uid, _, _ = strings.Cut(uid, "(")
+			uid_int64, _ := strconv.ParseUint(uid, 10, 32)
+			uid_int := uint32(uid_int64)
+
+			_, rest, _ = strings.Cut(rest, "groups=")
+			groups := strings.Split(rest, ",")
+
+			var ids []uint32
+			var names []string
+
+			for _, group := range groups {
+				gid_string, name, _ := strings.Cut(group, "(")
+
+				gid_64, _ := strconv.ParseUint(gid_string, 10, 32)
+				gid_int := uint32(gid_64)
+				ids = append(ids, gid_int)
+
+				name = name[:len(name)-1]
+				names = append(names, name)
+			}
+			return uid_int, ids, names
+		}
+
+		id, groupsID, groupsNames := processIdOutput(string(id_string[:]))
+
+		return UserInfo{UID: id, GroupsID: groupsID, GroupsNames: groupsNames}, nil
+	}
+	return UserInfo{}, ErrNotReachable
 }
 
 func SessionGet(ctx *App, res http.ResponseWriter, req *http.Request) {
@@ -48,6 +105,8 @@ func SessionGet(ctx *App, res http.ResponseWriter, req *http.Request) {
 	if ctx.Share.Id == "" && Config.Get("features.protection.enable_chromecast").Bool() {
 		r.Authorization = ctx.Authorization
 	}
+	r.UserInfo, _ = GetUserInfo(ctx)
+	fmt.Println((r.UserInfo))
 	SendSuccessResult(res, r)
 }
 

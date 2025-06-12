@@ -383,6 +383,68 @@ export function mv(fromPath, toPath) {
     }();
 }
 
+export function chmod(path, permissions) {
+    const [basepath, name] = extractPath(path);
+    let type = null;
+
+    return new class ChmodVL extends IVirtualLayer {
+        /**
+         * @override
+         */
+        before() {
+            stateAdd(mutationFiles$, basepath, {
+                name: name,
+                fn: (file) => {
+                    if (file.name === name){
+                            file.loading = true;
+                            file.permissions = permissions;
+                            type = file.type;
+                    }
+                    return file;
+                },
+            });
+
+        }
+
+        /**
+         * @override
+         */
+        async afterSuccess() {
+            await fscache().remove(path, false);
+            stateAdd(mutationFiles$, basepath, {
+                name: name,
+                fn: (file) => {
+                    if (file.name === name) {
+                        file = { ...file, loading: false };
+                    }
+                    return file;
+                },
+            });
+            await fscache().update(basepath, ({ files = [], ...rest }) => {
+                return {
+                    files: files.map((file) => {
+                        if (file.name === name){
+                            file.permissions = permissions;
+                        }
+                        return file;
+                    }),
+                    ...rest,
+                };
+            });
+            hooks.mutation.emit({ op: "chmod", path: basepath });
+        }
+
+        /**
+         * @override
+         */
+        async afterError() {
+            statePop(mutationFiles$, basepath, name);
+            return rxjs.EMPTY;
+        }
+    }();
+
+}
+
 export function ls(path) {
     return rxjs.pipe(
         // case1: file mutation = update a file state, typically to add a loading state to an

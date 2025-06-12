@@ -1,6 +1,7 @@
 import rxjs from "../lib/rx.js";
 import ajax from "../lib/ajax.js";
 import { forwardURLParams } from "../lib/path.js";
+import fscache from "../pages/filespage/cache.js";
 
 export function getSession() {
     return ajax({
@@ -9,6 +10,10 @@ export function getSession() {
         responseType: "json"
     }).pipe(
         rxjs.map(({ responseJSON }) => responseJSON.result),
+        rxjs.map((result) => {
+            fscache().storeUser(result.user_info);
+            return result;
+        }),
         rxjs.tap(({ authorization }) => {
             if (authorization) window.BEARER_TOKEN = authorization;
         }),
