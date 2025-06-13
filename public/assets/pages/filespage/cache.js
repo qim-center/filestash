@@ -121,6 +121,17 @@ class IndexDBCache extends ICache {
         });
     }
 
+    async getUser() {
+        const db = assert.truthy(await this.db);
+        const tx = db.transaction(this.FILE_PATH, "readonly");
+        const store = tx.objectStore(this.FILE_PATH);
+        const query = store.get(["user_info", "user_info", "user_info"]);
+        return await new Promise((done) => {
+            query.onsuccess = () => done(query.result || null);
+            query.onerror = () => done(null);
+        });
+    }
+
     /**
      * @override
      */
@@ -134,6 +145,23 @@ class IndexDBCache extends ICache {
             backend: currentBackend(),
             share: currentShare(),
             path,
+        });
+        return await new Promise((done, error) => {
+            done(value);
+            request.onsuccess = () => done(value);
+            request.onerror = error;
+        });
+    }
+
+    async storeUser(value) {
+        const db = assert.truthy(await this.db);
+        const tx = db.transaction(this.FILE_PATH, "readwrite");
+        const store = tx.objectStore(this.FILE_PATH);
+        const request = store.put({
+            ...value,
+            backend: "user_info",
+            share: "user_info",
+            path: "user_info",
         });
         return await new Promise((done, error) => {
             done(value);

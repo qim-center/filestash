@@ -269,6 +269,12 @@ func (b Sftp) Ls(path string) ([]os.FileInfo, error) {
 	return files, b.err(err)
 }
 
+func (b Sftp) Chmod(path string, permissions int) error {
+	mode := os.FileMode(permissions)
+	err := b.SFTPClient.Chmod(path, mode)
+	return b.err(err)
+}
+
 func (b Sftp) Cat(path string) (io.ReadCloser, error) {
 	remoteFile, err := b.SFTPClient.OpenFile(path, os.O_RDONLY)
 	if err != nil {

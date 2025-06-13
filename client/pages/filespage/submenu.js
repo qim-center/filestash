@@ -68,6 +68,7 @@ class SubmenuComponent extends React.Component {
         this.props.emit("file.download.multiple", arrayOfPaths);
     }
 
+
     onExtract(arrayOfPaths) {
         alert.now(<ExtractZipRequest
                       refresh={this.props.emit.bind(this, "file.refresh")}
@@ -135,7 +136,7 @@ class SubmenuComponent extends React.Component {
                             cond={this.props.accessRight.can_create_file !== false && this.props.selected.length === 0}
                             onClick={this.onNew.bind(this, "file")}
                             type="inline">
-                            { window.innerWidth < 410 && t("New File").length > 10 ? t("New File", null, "NEW_FILE::SHORT") : t("New File") }
+                            { window.innerWidth < 410 && t("Create New File").length > 10 ? t("New File", null, "NEW_FILE::SHORT") : t("New File") }
                         </NgIf>
                         <NgIf
                             className="button-new-folder"
@@ -159,7 +160,7 @@ class SubmenuComponent extends React.Component {
                             type="inline"
                             onMouseDown={this.onDelete.bind(this, this.props.selected)}>
                             <ReactCSSTransitionGroup transitionName="submenuwithSelection" transitionLeave={false} transitionEnter={false} transitionAppear={true} transitionAppearTimeout={10000}>
-                                <span>{ t("Remove") }</span>
+                                <span>{ t("Remove this file") }</span>
                             </ReactCSSTransitionGroup>
                         </NgIf>
                         <NgIf
