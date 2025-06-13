@@ -15,7 +15,10 @@ export default function(render, filename, file, user_info) {
 function renderDesktop(render, filename, file, user_info) {
     const $modal = createElement(`
         <div>
-            ${t("Permissions to " + filename)}:
+            <b>${filename}</b><br/>
+            ${"Owner: " + (file.uid === user_info.uid ? "You" : file.uid)}<br/>
+            ${"Group: " + (user_info.gids.includes(file.gid) ? user_info.gnames[user_info.gids.indexOf(file.gid)] : file.gid)}<br/><br/>
+            Permissions:
             <form style="margin-top: 10px;">
                 <div id="checkbox-grid"></div>
                 <div class="modal-error-message"></div>
@@ -26,7 +29,7 @@ function renderDesktop(render, filename, file, user_info) {
     let permissions = permissionsToList(file.perms)
     const gridContainer = qs($modal, '#checkbox-grid');
     // Set this to true or false to enable/disable all checkboxes
-    const allDisabled = false;
+    const allDisabled = file.uid !== user_info.uid;
 
     // Example row titles
     const rowTitles = ['User', 'Group', 'All'];
