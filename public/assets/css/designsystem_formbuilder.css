@@ -18,7 +18,6 @@
     display: none;
 }
 .formbuilder fieldset legend {
-    text-transform: uppercase;
     color: var(--light);
     opacity: 0.9;
     font-size: 1.1em;

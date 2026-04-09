@@ -1,0 +1,120 @@
+:root {
+    --qim-font-sans: "Nunito", "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+
+    --qim-orange: #FC7323;
+    --qim-red: #E63F47;
+    --qim-grey: #747474;
+    --qim-bg: #F8F9FA;
+
+    --qim-text-strong: #1f2937;
+    --qim-text-soft: #515151;
+
+    --qim-radius-sm: 6px;
+    --qim-radius-md: 10px;
+}
+
+html,
+body {
+    font-family: var(--qim-font-sans);
+    color: var(--qim-text-strong);
+}
+
+button,
+.btn,
+input,
+textarea,
+select {
+    font-family: var(--qim-font-sans);
+}
+
+input:not([type="checkbox"]),
+textarea,
+select {
+    border-radius: var(--qim-radius-sm);
+    border: 1px solid color-mix(in srgb, var(--qim-grey) 35%, white 65%);
+    color: var(--qim-text-strong);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:not([type="checkbox"]):focus,
+textarea:focus,
+select:focus {
+    border-color: var(--qim-orange);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--qim-orange) 20%, transparent 80%);
+    outline: none;
+}
+
+button,
+.btn {
+    border-radius: var(--qim-radius-sm);
+    border: 2px solid var(--qim-orange);
+    background: transparent;
+    color: var(--qim-orange);
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+button:hover,
+.btn:hover,
+button:focus-visible,
+.btn:focus-visible {
+    background: var(--qim-orange);
+    border-color: var(--qim-orange);
+    color: #ffffff;
+}
+
+button:active,
+.btn:active {
+    transform: translateY(1px);
+}
+
+/* QIM: top file-action menu buttons */
+:root {
+    --qim-topmenu-border: var(--qim-text-soft);
+    --qim-topmenu-text: var(--qim-text-soft);
+    --qim-topmenu-bg: transparent;
+    --qim-topmenu-hover-bg: var(--qim-grey);
+    --qim-topmenu-hover-text: #ffffff;
+}
+
+
+[is="component_submenu"] .component_submenu .action.left {
+    display: flex;
+    gap: 8px;
+}
+
+[is="component_submenu"] .component_submenu .action.right {
+    background: transparent !important;
+}
+
+[is="component_submenu"] .component_submenu .action.right button:hover img,
+[is="component_submenu"] .component_submenu .action.right button:focus-visible img {
+    filter: brightness(0) invert(1) !important;
+}
+
+
+[is="component_submenu"] .component_submenu .action button,
+.dark-mode [is="component_submenu"] .component_submenu .action button {
+    background: var(--qim-topmenu-bg) !important;
+    color: var(--qim-topmenu-text) !important;
+    border: 1px solid var(--qim-topmenu-border) !important;
+    border-radius: var(--qim-radius-sm) !important;
+    font-weight: 600;
+    letter-spacing: 0;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.touch-no [is="component_submenu"] .component_submenu .action button:hover,
+[is="component_submenu"] .component_submenu .action button:hover,
+[is="component_submenu"] .component_submenu .action button:focus-visible,
+.dark-mode [is="component_submenu"] .component_submenu .action button:hover,
+.dark-mode [is="component_submenu"] .component_submenu .action button:focus-visible {
+    background: var(--qim-topmenu-hover-bg) !important;
+    color: var(--qim-topmenu-hover-text) !important;
+    border-color: var(--qim-topmenu-hover-bg) !important;
+    filter: none !important;
+}
+
+[is="component_submenu"] .component_submenu .action button:active {
+    transform: translateY(1px);
+    filter: none !important;
+}

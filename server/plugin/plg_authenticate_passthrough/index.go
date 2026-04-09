@@ -36,6 +36,16 @@ func (this Passthrough) Setup() Form {
 	}
 }
 
+func loginIntro() string {
+	return `
+        <section style="max-width: 450px; margin: auto; text-align: left; box-sizing: border-box;">
+            <h1>QIM Filestash</h1>
+            <p>Here you can access and interact with the DTU HPC file system (Gbar) via a web SFTP client. For bugs and feature requests, please use our <a href="https://github.com/qim-center/filestash" target="_blank" rel="noopener noreferrer">GitHub</a>.</p>
+            <p>Please login using your DTU credentials:</p>
+        </section>
+    `
+}
+
 func (this Passthrough) EntryPoint(idpParams map[string]string, req *http.Request, res http.ResponseWriter) error {
 	res.Header().Set("Content-Type", "text/html; charset=utf-8")
 	getParams := "?label=" + html.EscapeString(req.URL.Query().Get("label")) + "&state=" + html.EscapeString(req.URL.Query().Get("state"))
@@ -48,17 +58,17 @@ func (this Passthrough) EntryPoint(idpParams map[string]string, req *http.Reques
         `)))
 	case "password_only":
 		res.WriteHeader(http.StatusOK)
-		res.Write([]byte(Page(`
+		res.Write([]byte(Page(loginIntro() + `
             <form action="` + WithBase("/api/session/auth/"+getParams) + `" method="post">
                 <label>
                     <input type="password" name="password" value="" placeholder="Password" />
                 </label>
-                <button>CONNECT</button>
+                <button>Connect</button>
             </form>
         `)))
 	case "username_and_password":
 		res.WriteHeader(http.StatusOK)
-		res.Write([]byte(Page(`
+		res.Write([]byte(Page(loginIntro() + `
             <form action="` + WithBase("/api/session/auth/"+getParams) + `" method="post">
                 <label>
                     <input type="text" name="user" value="" placeholder="User" />
@@ -66,7 +76,7 @@ func (this Passthrough) EntryPoint(idpParams map[string]string, req *http.Reques
                 <label>
                     <input type="password" name="password" value="" placeholder="Password" />
                 </label>
-                <button>CONNECT</button>
+                <button>Connect</button>
             </form>
         `)))
 	default:

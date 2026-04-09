@@ -49,7 +49,6 @@
     margin-left: auto;
 }
 .component_popup .buttons button {
-    text-transform: uppercase;
 }
 .component_popup .modal-error-message {
     color: var(--error);

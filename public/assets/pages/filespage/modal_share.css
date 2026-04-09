@@ -84,7 +84,6 @@
     font-size: 0.8em;
     opacity: 0.6;
     min-width: 75px;
-    text-transform: uppercase;
 }
 .component_share .share--content.existing-links .link-details .path {
     font-size: 0.9em;

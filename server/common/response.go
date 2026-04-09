@@ -119,6 +119,8 @@ func Page(stuff string) string {
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="custom.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <title>` + Config.Get("general.name").String() + `</title>
     <style>
       html { background: #f2f3f5; font-size: 16px; font-family: "San Francisco","Roboto","Arial",sans-serif; height: 100%;}
@@ -138,6 +140,7 @@ func Page(stuff string) string {
       ` + Hooks.Get.CSS() + `
       ` + Config.Get("general.custom_css").String() + `
     </style>
+    <link rel="stylesheet" href="` + WithBase("/assets/css/qim.css") + `">
   </body>
 </html>`
 }
