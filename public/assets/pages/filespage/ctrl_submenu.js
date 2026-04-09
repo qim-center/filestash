@@ -125,20 +125,20 @@ function componentLeft(render, { $scroll, getSelectionLength$ }) {
             <button data-action="rename" title="${t("Rename")}"${toggleDependingOnPermission(currentPath(), "rename")}>
                 <i class="fa-solid fa-pen" aria-hidden="true"></i>${t("Rename")}
             </button>
+            <button data-action="tag" title="${t("Tag")}" class="${getConfig("enable_tags", false) ? "" : "hidden"}">
+            <i class="fa-solid fa-tag" aria-hidden="true"></i>${t("Bookmark")}
+            </button>
             <button data-action="share" title="${t("Share")}" class="${(getConfig("enable_share") && !new URLSearchParams(location.search).has("share")) ? "" : "hidden"}">
                 <i class="fa-solid fa-share-nodes" aria-hidden="true"></i>${t("Share")}
             </button>
             <button data-action="copy_path" title="${t("Copy path")}">
                 <i class="fa-solid fa-copy" aria-hidden="true"></i>${t("Copy path")}
             </button>
+            <button data-action="change_permissions"${toggleDependingOnPermission(currentPath(), "delete")} title="${t("Permissions")}">
+            <i class="fa-solid fa-user-shield" aria-hidden="true"></i>${t("Permissions")}
+            </button>
             <button data-action="open_volume_explorer" title="${t("Volume Explorer")}">
                 <i class="fa-solid fa-cube" aria-hidden="true"></i>${t("Volume Explorer")}
-            </button>
-            <button data-action="change_permissions"${toggleDependingOnPermission(currentPath(), "delete")} title="${t("Change permissions")}">
-                <i class="fa-solid fa-user-shield" aria-hidden="true"></i>${t("Change permissions")}
-            </button>
-            <button data-action="tag" title="${t("Tag")}" class="${getConfig("enable_tags", false) ? "" : "hidden"}">
-                <i class="fa-solid fa-tag" aria-hidden="true"></i>${t("Tag")}
             </button>
         `))),
         rxjs.tap(($buttons) => animate($buttons, { time: 100, keyframes: slideYIn(5) })),
