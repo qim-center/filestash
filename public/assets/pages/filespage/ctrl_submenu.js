@@ -32,8 +32,8 @@ import { rm as rmVL, mv as mvVL, chmod as chmodVL, withVirtualLayer } from "./mo
 import Notification from "../../components/notification.js";
 
 const modalOpt = {
-    withButtonsRight: t("OK"),
-    withButtonsLeft: t("CANCEL"),
+    withButtonsRight: t("Confirm"),
+    withButtonsLeft: t("Cancel"),
 };
 
 const rm = (...paths) => withVirtualLayer(

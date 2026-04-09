@@ -32,6 +32,7 @@ textarea,
 select {
     border-radius: var(--qim-radius-sm);
     border: 1px solid color-mix(in srgb, var(--qim-grey) 35%, white 65%);
+    padding: 5px;
     color: var(--qim-text-strong);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -62,10 +63,10 @@ button:focus-visible,
     color: #ffffff;
 }
 
-button:active,
+/* button:active,
 .btn:active {
     transform: translateY(1px);
-}
+} */
 
 /* QIM: top file-action menu buttons */
 :root {
@@ -137,6 +138,11 @@ button:active,
     justify-content: center;
 }
 
+.component_thing.selected .selectionOverlay {
+    background: var(--qim-orange) !important;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+}
+
 .list > .component_thing.view-grid > .component_icon_folder.filetype-icon {
     padding: 30px;
     box-sizing: border-box;
@@ -156,4 +162,74 @@ button:active,
 [is="component_submenu"] .component_submenu .action.left button > i.fa-solid {
     font-size: 0.9em;
     opacity: 0.8;
+}
+
+/* QIM: modal dialog styling */
+:root {
+    --qim-modal-overlay-bg: color-mix(in srgb, #0f172a 28%, transparent);
+    --qim-modal-width: 512px;
+    --qim-modal-padding: 22px;
+    --qim-modal-radius: 14px;
+    --qim-modal-border: 1px solid color-mix(in srgb, var(--qim-text-soft) 20%, #ffffff 80%);
+    --qim-modal-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+    --qim-modal-content-gap: 14px;
+
+    --qim-modal-button-gap: 10px;
+    --qim-modal-button-height: 40px;
+    --qim-modal-button-radius: 10px;
+    --qim-modal-button-border: 1px solid color-mix(in srgb, var(--qim-grey) 35%, transparent);
+    --qim-modal-button-bg: #ffffff;
+    --qim-modal-button-color: var(--qim-text-strong);
+
+    --qim-modal-primary-bg: var(--qim-orange);
+    --qim-modal-primary-border: var(--qim-orange);
+    --qim-modal-primary-color: #ffffff;
+}
+
+.component_modal {
+    background: var(--qim-modal-overlay-bg) !important;
+}
+
+.component_modal > div {
+    width: var(--qim-modal-width) !important;
+    max-width: var(--qim-modal-width) !important;
+    padding: var(--qim-modal-padding) !important;
+    border-radius: var(--qim-modal-radius) !important;
+    border: var(--qim-modal-border) !important;
+    box-shadow: var(--qim-modal-shadow) !important;
+    background: #ffffff !important;
+}
+
+.component_popup .popup--content {
+    display: grid;
+    gap: var(--qim-modal-content-gap);
+}
+
+.component_popup .buttons {
+    margin: 18px 0 0 0 !important;
+    display: flex;
+    gap: var(--qim-modal-button-gap);
+}
+
+.component_popup .buttons > button {
+    width: auto !important;
+    flex: 1 1 0;
+    min-height: var(--qim-modal-button-height);
+    border-radius: var(--qim-modal-button-radius) !important;
+    border: var(--qim-modal-button-border) !important;
+    background: var(--qim-modal-button-bg) !important;
+    color: var(--qim-modal-button-color) !important;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.component_popup .buttons > button.emphasis {
+    background: var(--qim-modal-primary-bg) !important;
+    border-color: var(--qim-modal-primary-border) !important;
+    color: var(--qim-modal-primary-color) !important;
+}
+
+.component_popup .buttons > button:hover,
+.component_popup .buttons > button:focus-visible {
+    filter: brightness(0.9);
 }
