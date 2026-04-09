@@ -80,7 +80,7 @@ func (this Htpasswd) EntryPoint(idpParams map[string]string, req *http.Request, 
         <label>
           <input type="password" name="password" value="" placeholder="Password" />
         </label>
-        <button>CONNECT</button>
+        <button>Connect</button>
         ` + getFlash() + `
         <style>
           .flash{ color: #f26d6d; font-weight: bold; }

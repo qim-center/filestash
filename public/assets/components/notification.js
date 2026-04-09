@@ -54,7 +54,7 @@ class NotificationComponent extends HTMLElement {
         await Promise.race([
             new Promise((done) => ids.push(setTimeout(() => {
                 done(new MouseEvent("mousedown"));
-            }, this.buffer.length === 1 ? 8000 : 800))),
+            }, this.buffer.length === 1 ? 20000 : 1000))),
             new Promise((done) => ids.push(setTimeout(() => {
                 const $close = $notification.querySelector(".close");
                 if (!($close instanceof HTMLElement)) throw new ApplicationError("INTERNAL_ERROR", "assumption failed: notification close button missing");

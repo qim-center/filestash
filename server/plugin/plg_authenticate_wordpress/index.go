@@ -50,7 +50,7 @@ func (this Wordpress) EntryPoint(idpParams map[string]string, req *http.Request,
         <label>
           <input type="password" name="password" value="" placeholder="Password" />
         </label>
-        <button>CONNECT</button>
+        <button>Connect</button>
         <style>
           form { padding-top: 10vh; }
         </style>

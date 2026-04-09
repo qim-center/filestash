@@ -92,7 +92,7 @@ export default async function(render) {
             }
         }))),
         applyMutation(qs($page, "[data-bind=\"form\"] form"), "replaceChildren"),
-        rxjs.tap(($innerForm) => $innerForm.parentElement.appendChild(createElement(`<button class="emphasis full-width">${t("CONNECT")}</button>`))),
+        rxjs.tap(($innerForm) => $innerForm.parentElement.appendChild(createElement(`<button class="emphasis full-width">${t("Connect")}</button>`))),
         rxjs.tap(($innerForm) => {
             const $box = $innerForm.parentElement.parentElement;
             let $animationTarget = $innerForm;

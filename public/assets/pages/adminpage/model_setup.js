@@ -181,7 +181,7 @@ function withPreset($preset, { password, hasStorage, hasAuth }) {
         const $div = createElement(`<div></div>`);
         const $button = document.createElement("button");
         $button.className = "no-select";
-        $button.innerText = `APPLY PRESET`;
+        $button.innerText = `Apply Preset`;
         $button.onclick = onClick(specs);
         $div.appendChild($button);
         $div.appendChild(createElement(`<span> &#x27A1; ${specs.name || "N/A"}</span>`));
@@ -211,7 +211,6 @@ const CSS = `
     background: rgba(0, 0, 0, 0.3);
     margin: 2px 0;
     padding: 5px 9px;
-    text-transform: uppercase;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
     font-size: 0.92rem;
 }

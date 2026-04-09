@@ -8,11 +8,11 @@
 }
 .component_notification .component_notification--container {
     overflow: hidden;
-    width: 400px;
+    width: 800px;
     text-align: left;
     display: inline-block;
     padding: 15px 20px 15px 15px;
-    border-radius: 2px;
+    border-radius: 8px;
     box-shadow: rgba(158, 163, 172, 0.3) 5px 5px 20px;
     display: flex;
     align-items: center;

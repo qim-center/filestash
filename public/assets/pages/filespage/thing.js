@@ -41,7 +41,7 @@ export function init() {
 const $tmpl = createElement(`
     <a href="__TEMPLATE__" class="component_thing no-select" data-selectable="true" draggable="false" data-link>
         <div class="component_checkbox"><input name="select" type="checkbox"><span class="indicator"></span></div>
-        <img class="component_icon" loading="lazy" draggable="false" src="__TEMPLATE__" alt="directory">
+        <img class="component_icon filetype-icon" loading="lazy" draggable="false" src="__TEMPLATE__" alt="directory">
         <div class="info_extension"><span class="ellipsis"></span></div>
         <span class="component_filename">
             <span class="file-details"><span class="ellipsis">
@@ -96,6 +96,13 @@ export function createThing({
     $img.setAttribute("src", (type === "file" ? IMAGE.FILE : IMAGE.FOLDER));
     $img.setAttribute("alt", type);
     $label.textContent = name;
+
+    if (type === "directory" && loading === false) {
+        const $folderIcon = document.createElement("i");
+        $folderIcon.className = "component_icon filetype-icon component_icon_folder fa-solid fa-folder";
+        $folderIcon.setAttribute("aria-hidden", "true");
+        $thing.replaceChild($folderIcon, $img);
+    }
 
     if (type === "file") {
         $extension.textContent = ext;
