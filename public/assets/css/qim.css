@@ -233,3 +233,59 @@ button:focus-visible,
 .component_popup .buttons > button:focus-visible {
     filter: brightness(0.9);
 }
+
+/* Login page */
+.component_page_connect{
+    background: var(--qim-bg) !important;
+}
+
+.component_container{
+    padding-top: 0px !important;
+}
+
+.component_page_connect_title{
+    margin-top: 128px !important;
+}
+
+.component_page_connection_form div.buttons button.active{
+    background: var(--qim-orange) !important;
+    border-color: var(--qim-orange) !important;
+    color: #ffffff !important;
+}
+
+.component_page_connection_form div.buttons button:not(.active):hover{
+    color: var(--qim-text-strong);
+
+}
+
+.component_page_connection_form form button.emphasis{
+    border-radius: var(--qim-radius-sm);
+    border: 1px solid var(--qim-orange);
+    background: transparent;
+    color: var(--qim-orange) !important;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+
+}
+
+.component_page_connection_form form button.emphasis:hover{
+    background: var(--qim-orange);
+    border-color: var(--qim-orange);
+    color: #ffffff !important;
+}
+
+.component_page_connection_form .box{
+    background: #ffffff !important;
+    border-radius: var(--qim-radius-md);
+    box-shadow: none !important;
+    padding: 10px !important;
+}
+    
+.component_page_connection_form div.buttons{
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px !important;
+    padding: 10px !important;
+    
+    

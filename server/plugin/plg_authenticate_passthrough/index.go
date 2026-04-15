@@ -36,19 +36,23 @@ func (this Passthrough) Setup() Form {
 	}
 }
 
-func loginIntro() string {
+func loginIntro(label string) string {
+	if label == "" {
+		label = "QIM"
+	}
 	return `
         <section style="max-width: 450px; margin: auto; text-align: left; box-sizing: border-box;">
-            <h1>QIM Filestash</h1>
-            <p>Here you can access and interact with the DTU HPC file system (Gbar) via a web SFTP client. For bugs and feature requests, please use our <a href="https://github.com/qim-center/filestash" target="_blank" rel="noopener noreferrer">GitHub</a>.</p>
-            <p>Please login using your DTU credentials:</p>
+            <h1>` + label + ` Filestash</h1>
+            <p>Here you can access and interact with the `+ label + ` file system via a web client. For bugs and feature requests, please use our <a href="https://github.com/qim-center/filestash" target="_blank" rel="noopener noreferrer">GitHub</a>.</p>
+            <p>Please login using your ` + label + ` credentials:</p>
         </section>
     `
 }
 
 func (this Passthrough) EntryPoint(idpParams map[string]string, req *http.Request, res http.ResponseWriter) error {
 	res.Header().Set("Content-Type", "text/html; charset=utf-8")
-	getParams := "?label=" + html.EscapeString(req.URL.Query().Get("label")) + "&state=" + html.EscapeString(req.URL.Query().Get("state"))
+	label := html.EscapeString(req.URL.Query().Get("label"))
+	getParams := "?label=" + label + "&state=" + html.EscapeString(req.URL.Query().Get("state"))
 	switch idpParams["strategy"] {
 	case "direct":
 		res.WriteHeader(http.StatusOK)
@@ -58,7 +62,7 @@ func (this Passthrough) EntryPoint(idpParams map[string]string, req *http.Reques
         `)))
 	case "password_only":
 		res.WriteHeader(http.StatusOK)
-		res.Write([]byte(Page(loginIntro() + `
+		res.Write([]byte(Page(loginIntro(label) + `
             <form action="` + WithBase("/api/session/auth/"+getParams) + `" method="post">
                 <label>
                     <input type="password" name="password" value="" placeholder="Password" />
@@ -68,7 +72,7 @@ func (this Passthrough) EntryPoint(idpParams map[string]string, req *http.Reques
         `)))
 	case "username_and_password":
 		res.WriteHeader(http.StatusOK)
-		res.Write([]byte(Page(loginIntro() + `
+		res.Write([]byte(Page(loginIntro(label) + `
             <form action="` + WithBase("/api/session/auth/"+getParams) + `" method="post">
                 <label>
                     <input type="text" name="user" value="" placeholder="User" />
