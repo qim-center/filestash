@@ -3,6 +3,15 @@
     height: 100%;
     padding: 15px 0 0 0;
 }
+
+.component_page_connect_title{
+    text-align: center;
+    font-size: 1.45rem;
+    font-weight: 700;
+    margin: 0 auto 24px auto;
+    color: var(--text-color, var(--qim-text-strong, #1f2937));
+}
+
 .dark-mode .component_page_connect{
     background: var(--bg-color);
 }

@@ -11,24 +11,20 @@ export default async function(render) {
     const $page = createElement(`
         <div class="component_page_connect">
             <style>${await CSS(import.meta.url, "ctrl_connectpage.css")}</style>
-            <div data-bind="component_forkme"></div>
+            <style>${await CSS(import.meta.url, "qim.css")}</style>
+            <div class="component_page_connect_title">Select file server</div>
             <div data-bind="centerthis" class="component_page_connection_form component_container" style="max-width:565px;">
                 <div data-bind="component_form"></div>
             </div>
-            <div data-bind="component_poweredby"></div>
         </div>
     `);
     render($page);
 
-    // feature1: forkme & poweredby button
-    ctrlForkme(createRender(qs($page, `[data-bind="component_forkme"]`)));
-    ctrlPoweredby(createRender(qs($page, `[data-bind="component_poweredby"]`)));
-    await new Promise((done) => setTimeout(done, 250));
 
-    // feature2: connection form
+    // Connection form
     ctrlForm(createRender(qs($page, `[data-bind="component_form"]`)));
 
-    // feature3: center the form
+    // Center the form
     effect(rxjs.fromEvent(window, "resize").pipe(
         rxjs.startWith(null),
         rxjs.map(() => {
