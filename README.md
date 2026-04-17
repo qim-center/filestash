@@ -65,6 +65,9 @@ Then open Filestash in your browser.
 ### Typical Local Dev Workflow
 
 ```bash
+# If generated sources changed (for example MIME mappings), run this first:
+make init
+
 # Rebuild backend
 make build
 
