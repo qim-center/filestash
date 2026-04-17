@@ -1,0 +1,24 @@
+{
+    "author": "QIM Center",
+    "version": "v0.1",
+    "modules": [
+        {
+            "type": "xdg-open",
+            "mime": "application/x-ipynb+json",
+            "entrypoint": "loader_ipynb.js",
+            "application": "skeleton"
+        },
+        {
+            "type": "xdg-open",
+            "mime": "application/vnd.jupyter",
+            "entrypoint": "loader_ipynb.js",
+            "application": "skeleton"
+        },
+        {
+            "type": "xdg-open",
+            "mime": "application/ipynb+json",
+            "entrypoint": "loader_ipynb.js",
+            "application": "skeleton"
+        }
+    ]
+}

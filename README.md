@@ -9,6 +9,7 @@ Filestash remains the upstream foundation. This fork keeps compatibility with Fi
 - **Copy Path**: Copy the full path of a file or folder directly from the UI.
 - **Permissions**: View and edit file mode permissions from the file browser.
 - **Volume Explorer**: Volumetric data visualization. Works with OME-Zarr v2 and v3.
+- **Notebook Viewer**: Read-only Jupyter Notebook (`.ipynb`) rendering directly in Filestash.
 
 The plugin bundles the published `@qim3d/volume-explorer` web app and integrates it with Filestash session-backed file access.
 
@@ -37,14 +38,18 @@ make build
 This creates:
 - `dist/filestash`
 
-### Build and Install the Volume Explorer Plugin
+### Build and Install Plugins
 
 ```bash
+# Volume Explorer
 cd server/plugin/plg_application_volumeexplorer
-
-# Build plugin zip and install it into dist/data/state/plugins/
 make install
+cd ../../..
 
+# Notebook Viewer (.ipynb)
+cd server/plugin/plg_application_notebookviewer
+make install
+cd ../../..
 ```
 
 ### Run
@@ -63,8 +68,9 @@ Then open Filestash in your browser.
 # Rebuild backend
 make build
 
-# Just in case Volume Explorer was changed:
+# Reinstall plugin(s) after changes:
 cd server/plugin/plg_application_volumeexplorer && make install && cd ../../..
+cd server/plugin/plg_application_notebookviewer && make install && cd ../../..
 
 # Run app
 ./dist/filestash

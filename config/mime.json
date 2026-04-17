@@ -122,6 +122,7 @@
 	"jp2": "image/jp2",
 	"js": "application/javascript",
 	"json": "application/json",
+	"ipynb": "application/x-ipynb+json",
 	"kar": "audio/midi",
 	"kdc": "image/x-kodak-kdc",
 	"kicad_pcb": "application/vnd.kicad-pcb",
