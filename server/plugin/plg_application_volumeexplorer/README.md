@@ -24,3 +24,14 @@ The plugin zip will contain:
 - `manifest.json`
 - the Filestash loader adapter
 - the packaged `volume-explorer` web app under `app/`
+
+## SELinux
+
+After rebuilding the Filestash binary, the SELinux context on the binary may be reset,
+causing `status=203/EXEC` on service start. Restore it with:
+
+```sh
+sudo restorecon -v /srv/filestash/dist/filestash
+sudo chmod +x /srv/filestash/dist/filestash
+sudo systemctl restart filestash.service
+```

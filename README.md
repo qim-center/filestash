@@ -62,6 +62,7 @@ From repository root:
 
 Then open Filestash in your browser.
 
+
 ### Typical Local Dev Workflow
 
 ```bash
@@ -75,8 +76,20 @@ make build
 cd server/plugin/plg_application_volumeexplorer && make install && cd ../../..
 cd server/plugin/plg_application_notebookviewer && make install && cd ../../..
 
+
 # Run app
 ./dist/filestash
+```
+
+## SELinux
+
+After rebuilding the Filestash binary, the SELinux context may be reset, causing
+`status=203/EXEC` on service start. Restore it with:
+
+```bash
+sudo restorecon -v /srv/filestash/dist/filestash
+sudo chmod +x /srv/filestash/dist/filestash
+sudo systemctl restart filestash.service
 ```
 
 ## Upstream Reference
