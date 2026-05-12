@@ -40,6 +40,10 @@ This creates:
 
 ### Build and Install Plugins
 
+> **Note:** `make install` only re-zips whatever is already in the `app/` directory.
+> To download a new npm package version, run `make all install` instead
+> (which runs `clean → setup → build → install`).
+
 ```bash
 # Volume Explorer
 cd server/plugin/plg_application_volumeexplorer
