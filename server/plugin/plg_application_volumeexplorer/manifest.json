@@ -1,6 +1,6 @@
 {
     "author": "QIM Center",
-    "version": "v0.1",
+    "version": "1.4.0",
     "modules": [
         {
             "type": "xdg-open",
