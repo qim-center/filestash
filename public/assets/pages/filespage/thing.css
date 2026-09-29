@@ -5,6 +5,9 @@
     border-color: var(--super-light);
     border-radius: 5px;
 }
+.component_thing:not(.loading):hover .component_datetime {
+    opacity: 0.8;
+}
 .component_thing:not([href]) {
     cursor: not-allowed;
 }

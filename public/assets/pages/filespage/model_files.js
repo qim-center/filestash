@@ -88,13 +88,37 @@ export const chmod = (path, permissions) => ajax({
 
 export const save = () => rxjs.of(null).pipe(rxjs.delay(1000));
 
+const bc = new BroadcastChannel("filestash::ls::refresh");
+
 export const ls = (path) => {
-    const lsFromCache = (path) => rxjs.from(fscache().get(path));
-    const lsFromHttp = (path) => ajax({
-        url: withURLParams(`api/files/ls?path=${encodeURIComponent(path)}`),
-        method: "GET",
-        responseType: "json",
-    }).pipe(
+    const lsFromCache = (fullpath) => rxjs.from(fscache().get(fullpath));
+    const lsFromHttp = (fullpath) => rxjs.merge(
+        rxjs.of(null),
+        new rxjs.Observable((subscriber) => {
+            const source = new EventSource(withURLParams("api/files/watch"), {
+                withCredentials: true,
+            });
+            source.onmessage = (event) => {
+                let { kind, echo, op, path } = JSON.parse(event.data);
+                if (kind !== "fs" || echo !== false) return;
+                switch (op) {
+                case "mkdir": case "rm": case "mv":
+                    path = path.replace(new RegExp("\/$"), "");
+                case "save": case "touch":
+                    const suffix = basename(path);
+                    path = path.endsWith(suffix) ? path.slice(0, -suffix.length) : path;
+                }
+                if (fullpath === path) subscriber.next();
+            };
+            source.onerror = (err) => subscriber.error(err);
+            return () => source.close();
+        }),
+    ).pipe(
+        rxjs.switchMap(() => ajax({
+            url: withURLParams(`api/files/ls?path=${encodeURIComponent(fullpath)}`),
+            method: "GET",
+            responseType: "json",
+        })),
         handleErrorRedirectLogin,
         rxjs.map(({ responseJSON }) => ({
             files: responseJSON.results,
@@ -110,9 +134,12 @@ export const ls = (path) => {
         lsFromCache(path),
         rxjs.merge(
             rxjs.of(null),
-            rxjs.merge(rxjs.of(null), rxjs.fromEvent(window, "keydown").pipe( // "r" shorcut
-                rxjs.filter((e) => e.keyCode === 82 && !isAlreadyFocused()),
-            )).pipe(
+            rxjs.merge(
+                rxjs.of(null), rxjs.fromEvent(window, "keydown").pipe( // "r" shorcut
+                    rxjs.filter((e) => e.keyCode === 82 && !isAlreadyFocused()),
+                ),
+                rxjs.fromEvent(bc, "message"),
+            ).pipe(
                 rxjs.switchMap(() => lsFromHttp(path)),
                 rxjs.catchError((err) => navigator.onLine ? rxjs.throwError(err) : rxjs.EMPTY),
             ),
@@ -154,6 +181,11 @@ export const ls = (path) => {
         middlewareLs(path),
         tagFilter(path),
     );
+};
+
+export const refresh = () => {
+    window.dispatchEvent(new KeyboardEvent("keydown", { keyCode: 82 }));
+    bc.postMessage(null);
 };
 
 export const search = (term) => ajax({

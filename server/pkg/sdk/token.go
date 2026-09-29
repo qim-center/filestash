@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"time"
 
-	. "github.com/mickael-kerjean/filestash/server/common"
-	. "github.com/mickael-kerjean/filestash/server/ctrl"
+	. "github.com/mickael-kerjean/filestash/server/pkg/config"
+	. "github.com/mickael-kerjean/filestash/server/pkg/env"
+	. "github.com/mickael-kerjean/filestash/server/pkg/kernel"
+	. "github.com/mickael-kerjean/filestash/server/pkg/utils"
 )
 
 func (this *Filestash) NewToken(storage string, path string, formData map[string]string) error {
@@ -24,7 +26,7 @@ func (this *Filestash) NewToken(storage string, path string, formData map[string
 
 	session := formData
 	for k, v := range mapping {
-		out, err := TmplExec(NewStringFromInterface(v), formData)
+		out, err := TmplExec(NewStringFromInterface(v), TmplParams(formData))
 		if err != nil {
 			Log.Debug("sdk::NewToken action=tmplExec key=%s err=%s", k, err.Error())
 		}
@@ -42,5 +44,6 @@ func (this *Filestash) NewToken(storage string, path string, formData map[string
 		return err
 	}
 	this.Token = token
+	this.Storage = storage
 	return nil
 }

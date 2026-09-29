@@ -1,9 +1,10 @@
 export class AjaxError extends Error {
-    constructor(message, err = null, code = "UNDEFINED_CODE") {
+    constructor(message, err = null, code = "UNDEFINED_CODE", traceID = "N/A") {
         super(message);
         this.name = this.constructor.name;
         this.errCode = code;
         this.errOrig = err;
+        this.requestID = traceID;
     }
 
     code() {
@@ -16,6 +17,10 @@ export class AjaxError extends Error {
 
     type() {
         return "AjaxError";
+    }
+
+    traceID() {
+        return this.requestID;
     }
 }
 

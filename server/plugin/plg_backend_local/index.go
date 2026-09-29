@@ -1,28 +1,31 @@
 package plg_backend_local
 
 import (
-	. "github.com/mickael-kerjean/filestash/server/common"
-	"golang.org/x/crypto/bcrypt"
 	"io"
 	"os"
 	"os/user"
+
+	. "github.com/mickael-kerjean/filestash/server/common"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func init() {
-	Backend.Register("local", &Local{})
+	Backend.Register("local", &Local{os.Getenv("LOCAL_BACKEND_SECRET")})
 }
 
-type Local struct{}
+type Local struct {
+	secret string
+}
 
 func (this Local) Init(params map[string]string, app *App) (IBackend, error) {
-	backend := &Local{}
-	if params["password"] == Config.Get("general.secret_key").String() {
-		return backend, nil
+	if this.secret != "" && params["password"] == this.secret {
+		return &Local{}, nil
 	} else if err := bcrypt.CompareHashAndPassword(
 		[]byte(Config.Get("auth.admin").String()),
 		[]byte(params["password"]),
 	); err == nil {
-		return backend, nil
+		return &Local{}, nil
 	}
 	return nil, ErrAuthenticationFailed
 }
@@ -76,7 +79,13 @@ func (this Local) Ls(path string) ([]os.FileInfo, error) {
 		f.Close()
 		return nil, err
 	}
-	return files, f.Close()
+	out := files[:0]
+	for _, file := range files {
+		if file.Mode().IsRegular() || file.IsDir() {
+			out = append(out, file)
+		}
+	}
+	return out, f.Close()
 }
 
 func (this Local) Stat(path string) (os.FileInfo, error) {
@@ -105,7 +114,7 @@ func (this Local) Cat(path string) (io.ReadCloser, error) {
 		f.Close()
 		return nil, ErrNotFound
 	}
-	return f, nil
+	return NewDirect(f, fs), nil
 }
 
 func (this Local) Mkdir(path string) error {

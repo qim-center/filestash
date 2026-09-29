@@ -6,24 +6,28 @@ import (
 	"io"
 	"net/http"
 
-	. "github.com/mickael-kerjean/filestash/server/common"
-	. "github.com/mickael-kerjean/filestash/server/ctrl"
+	. "github.com/mickael-kerjean/filestash/server/pkg/config"
+	. "github.com/mickael-kerjean/filestash/server/pkg/env"
+	. "github.com/mickael-kerjean/filestash/server/pkg/utils"
+
+	"github.com/mickael-kerjean/filestash/server/pkg/extension"
+	"github.com/mickael-kerjean/filestash/server/pkg/tracer"
 )
 
-func (this Filestash) request(method string, url string, body io.Reader) (io.ReadCloser, http.Header, error) {
+func (this Filestash) request(method string, url string, body io.Reader) (_ io.ReadCloser, _ http.Header, err error) {
+	if this.onDone != nil {
+		defer func() { err = this.onDone(err) }()
+	}
 	req, err := http.NewRequest(method, this.URL+url, body)
 	if err != nil {
 		return nil, nil, err
 	}
 	req.Host = Config.Get("general.host").String()
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", this.Token))
-	req.Header.Set("X-Requested-With", "XmlHttpRequest")
+	req.Header.Set("X-Requested-With", "SDKHttpRequest")
+	tracer.Inject(this.Trace, req)
 
-	opts := []HTTPClientOption{WithoutTimeout}
-	if this.Insecure {
-		opts = append(opts, WithInsecure)
-	}
-	resp, err := HTTPClient(opts...).Do(req)
+	resp, err := this.Client.Do(req)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -62,7 +66,7 @@ func (this Filestash) unmarshalResults(resp io.ReadCloser, data interface{}) err
 
 func localURL() string {
 	scheme := "http"
-	if HasPlugin("plg_starter_https", "plg_starter_httpsfs", "plg_starter_web") {
+	if extension.HasPlugin("plg_starter_https", "plg_starter_httpsfs", "plg_starter_web") {
 		scheme = "https"
 	}
 	return WithBase(fmt.Sprintf("%s://localhost:%d", scheme, Config.Get("general.port").Int()))

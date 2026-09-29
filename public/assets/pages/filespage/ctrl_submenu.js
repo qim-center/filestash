@@ -213,7 +213,7 @@ function componentLeft(render, { $scroll, getSelectionLength$ }) {
                 const path = expandSelection()[0].path;
                 return rxjs.from(componentDelete(
                     createModal(modalOpt),
-                    basename(path.replace(new RegExp("/$"), "")).substr(0, 15),
+                    basename(path.replace(new RegExp("/$"), "")).substr(0, 15).trim(),
                 )).pipe(rxjs.mergeMap(() => {
                     const selection = expandSelection()[0].path;
                     clearSelection();
@@ -363,7 +363,7 @@ function componentRight(render, { getSelectionLength$ }) {
                             order: state.order,
                             $el,
                         })))),
-                        rxjs.tap(({ $el, order }) => {
+                        rxjs.tap(({ $el, order = "asc" }) => {
                             setState(
                                 "sort", $el.getAttribute("data-target"),
                                 "order", order === "asc" ? "des" : "asc",

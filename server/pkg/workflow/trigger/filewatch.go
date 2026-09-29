@@ -7,9 +7,12 @@ import (
 	"sync"
 	"time"
 
-	. "github.com/mickael-kerjean/filestash/server/common"
+	. "github.com/mickael-kerjean/filestash/server/pkg/core"
+	. "github.com/mickael-kerjean/filestash/server/pkg/env"
+	. "github.com/mickael-kerjean/filestash/server/pkg/files"
+	. "github.com/mickael-kerjean/filestash/server/pkg/kernel"
+	. "github.com/mickael-kerjean/filestash/server/pkg/utils"
 	. "github.com/mickael-kerjean/filestash/server/pkg/workflow/model"
-	"github.com/mickael-kerjean/filestash/server/model"
 )
 
 var (
@@ -115,7 +118,7 @@ func createBackend(token string) (IBackend, map[string]string, error) {
 	if err = json.Unmarshal([]byte(str), &session); err != nil {
 		return nil, session, err
 	}
-	backend, err := model.NewBackend(
+	backend, err := NewBackend(
 		&App{Context: context.Background()},
 		session,
 	)
