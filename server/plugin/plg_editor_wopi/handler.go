@@ -12,24 +12,23 @@ import (
 	"text/template"
 
 	. "github.com/mickael-kerjean/filestash/server/common"
-	"github.com/mickael-kerjean/filestash/server/ctrl"
 	"github.com/mickael-kerjean/filestash/server/middleware"
-	"github.com/mickael-kerjean/filestash/server/model"
+	"github.com/mickael-kerjean/filestash/server/pkg/permissions"
 
 	"github.com/gorilla/mux"
 )
 
 var WOPIRoutes = func(r *mux.Router) error {
 	r.HandleFunc(
-		"/api/wopi/iframe",
+		WithBase("/api/wopi/iframe"),
 		middleware.NewMiddlewareChain(
 			IframeContentHandler,
 			[]Middleware{middleware.SessionStart, middleware.LoggedInOnly},
 		),
 	).Methods("GET")
-	r.HandleFunc("/api/wopi/files/{path64}", WOPIHandler_CheckFileInfo).Methods("GET")
-	r.HandleFunc("/api/wopi/files/{path64}/contents", WOPIHandler_GetFile).Methods("GET")
-	r.HandleFunc("/api/wopi/files/{path64}/contents", WOPIHandler_PutFile).Methods("POST")
+	r.HandleFunc(WithBase("/api/wopi/files/{path64}"), WOPIHandler_CheckFileInfo).Methods("GET")
+	r.HandleFunc(WithBase("/api/wopi/files/{path64}/contents"), WOPIHandler_GetFile).Methods("GET")
+	r.HandleFunc(WithBase("/api/wopi/files/{path64}/contents"), WOPIHandler_PutFile).Methods("POST")
 	return nil
 }
 
@@ -52,7 +51,7 @@ func WOPIHandler_CheckFileInfo(w http.ResponseWriter, r *http.Request) {
 		if err := json.NewEncoder(w).Encode(map[string]any{
 			"BaseFileName":     filepath.Base(fullpath),
 			"UserFriendlyName": "Unknown",
-			"UserCanWrite":     model.CanEdit(ctx),
+			"UserCanWrite":     permissions.CanEdit(ctx),
 			"IsAdminUser":      false,
 			"IsAnonymousUser":  true,
 		}); err != nil {
@@ -89,7 +88,7 @@ func WOPIExecute(w http.ResponseWriter, r *http.Request) func(func(*App, string,
 	return func(fn func(*App, string, http.ResponseWriter)) {
 		middleware.NewMiddlewareChain(
 			func(ctx *App, w http.ResponseWriter, r *http.Request) {
-				fullpath, err := ctrl.PathBuilder(ctx, r.URL.Query().Get("path"))
+				fullpath, err := PathBuilder(ctx, r.URL.Query().Get("path"))
 				if err != nil {
 					SendErrorResult(w, err)
 					return
@@ -107,7 +106,7 @@ func wopiToCommonAPI(fn HandlerFunc) HandlerFunc {
 		if len(tmp) < 2 {
 			return "", ""
 		}
-		bpath, err := base64.StdEncoding.DecodeString(tmp[1])
+		bpath, err := base64.URLEncoding.DecodeString(tmp[1])
 		if err != nil {
 			return "", ""
 		} else if len(tmp) > 2 {
@@ -153,7 +152,11 @@ func IframeContentHandler(ctx *App, res http.ResponseWriter, req *http.Request) 
   </head>
   <body>
     <style> body { margin: 0; } body, html{ height: 100%; } iframe { width: 100%; height: 100%; background: white; } </style>
-    <iframe frameborder="0" src="{{ .server }}" class="hidden"></iframe>
+    <iframe name="wopi_frame" frameborder="0" class="hidden"></iframe>
+    <form id="wopi_form" method="POST" target="wopi_frame" action="{{ .server }}">
+        <input type="hidden" name="access_token" value="{{ .token }}" />
+    </form>
+    <script>document.getElementById("wopi_form").submit();</script>
 
     <script type="module" src="/assets/components/loader.js"></script>
     <component-loader />
@@ -168,7 +171,7 @@ func IframeContentHandler(ctx *App, res http.ResponseWriter, req *http.Request) 
             let msg = JSON.parse(event.data);
             if (!msg) return;
             switch(msg.MessageId) {
-                case "App_LoadingStatus": if (msg.Values.Status === "Initialized") {
+                case "App_LoadingStatus": if (["Initialized", "Document_Loaded"].indexOf(msg.Values.Status) !== -1) {
                         postChild({ MessageId: "Host_PostmessageReady" });
                         requestAnimationFrame(() => $iframe.classList.remove("hidden"));
                         document.querySelector("component-loader").remove();
@@ -193,6 +196,7 @@ func IframeContentHandler(ctx *App, res http.ResponseWriter, req *http.Request) 
 	}
 	if err := tmpl.Execute(res, map[string]interface{}{
 		"server": u,
+		"token":  ctx.Authorization,
 	}); err != nil {
 		res.Write([]byte(err.Error()))
 		return
@@ -268,18 +272,17 @@ func wopiDiscovery(ctx *App, fullpath string) (string, error) {
 		}
 		wopiSRC += Config.Get("general.host").String()
 	}
-	wopiSRC += "/api/wopi/files/"
+	wopiSRC += WithBase("/api/wopi/files/")
 	wopiSRC += GenerateID(map[string]string{
 		"id":   GenerateID(ctx.Session),
 		"path": fullpath,
 	})
-	wopiSRC += "::" + base64.StdEncoding.EncodeToString([]byte(fullpath))
+	wopiSRC += "::" + base64.URLEncoding.EncodeToString([]byte(fullpath))
 	if ctx.Share.Id != "" {
 		wopiSRC += "::" + ctx.Share.Id
 	}
 	p := u.Query()
 	p.Set("WOPISrc", wopiSRC)
-	p.Set("access_token", ctx.Authorization)
 	if len(ctx.Languages) > 0 {
 		p.Set("lang", ctx.Languages[0])
 	}

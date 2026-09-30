@@ -37,7 +37,7 @@ export default async function(render, { mime, acl$, getDownloadUrl = nop, getFil
 
     const $menubar = renderMenubar(
         qs($page, "component-menubar"),
-        buttonDownload(getFilename(), getDownloadUrl()),
+        buttonDownload(getDownloadUrl()),
     );
     const $draw = qs($page, ".drawarea");
     const $toolbar = qs($page, ".toolbar");
@@ -71,7 +71,6 @@ export default async function(render, { mime, acl$, getDownloadUrl = nop, getFil
         )),
         rxjs.catchError((err) => {
             let _err = err;
-            console.log("ERR", err);
             if (err.response && err.response.status === 401) {
                 _err = new Error(err.message);
                 _err.status = err.response.status;

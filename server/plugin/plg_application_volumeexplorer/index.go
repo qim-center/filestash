@@ -12,9 +12,9 @@ import (
     "time"
 
     . "github.com/mickael-kerjean/filestash/server/common"
-    ctrl "github.com/mickael-kerjean/filestash/server/ctrl"
     . "github.com/mickael-kerjean/filestash/server/middleware"
-    "github.com/mickael-kerjean/filestash/server/model"
+    files "github.com/mickael-kerjean/filestash/server/pkg/files"
+    "github.com/mickael-kerjean/filestash/server/pkg/permissions"
 
     "github.com/gorilla/mux"
 )
@@ -56,7 +56,7 @@ func init() {
 }
 
 func launchSource(ctx *App, res http.ResponseWriter, req *http.Request) {
-    if model.CanRead(ctx) == false {
+    if permissions.CanRead(ctx) == false {
         SendErrorResult(res, ErrPermissionDenied)
         return
     }
@@ -67,7 +67,7 @@ func launchSource(ctx *App, res http.ResponseWriter, req *http.Request) {
         return
     }
 
-    path, err := ctrl.PathBuilder(ctx, requestedPath)
+    path, err := PathBuilder(ctx, requestedPath)
     if err != nil {
         SendErrorResult(res, err)
         return
@@ -195,7 +195,7 @@ func fileCatProxy(ctx *App, res http.ResponseWriter, req *http.Request) {
     )
 
     if req.Header.Get("Range") == "" && rawRelativePath == "" {
-        ctrl.FileCat(ctx, res, req)
+        files.FileCat(ctx, res, req)
         return
     }
 
@@ -206,12 +206,12 @@ func fileCatProxy(ctx *App, res http.ResponseWriter, req *http.Request) {
         Path:   "/",
     })
 
-    if model.CanRead(ctx) == false {
+    if permissions.CanRead(ctx) == false {
         SendErrorResult(res, ErrPermissionDenied)
         return
     }
 
-    targetPath, err := ctrl.PathBuilder(ctx, req.URL.Query().Get("path"))
+    targetPath, err := PathBuilder(ctx, req.URL.Query().Get("path"))
     if err != nil {
         SendErrorResult(res, err)
         return

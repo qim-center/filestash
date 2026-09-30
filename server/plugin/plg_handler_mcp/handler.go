@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"time"
 
-	. "github.com/mickael-kerjean/filestash/server/common"
-	"github.com/mickael-kerjean/filestash/server/model"
+	. "github.com/mickael-kerjean/filestash/server/pkg/core"
+	. "github.com/mickael-kerjean/filestash/server/pkg/env"
+	. "github.com/mickael-kerjean/filestash/server/pkg/files"
+	. "github.com/mickael-kerjean/filestash/server/pkg/utils"
 	. "github.com/mickael-kerjean/filestash/server/plugin/plg_handler_mcp/impl"
 	. "github.com/mickael-kerjean/filestash/server/plugin/plg_handler_mcp/types"
 	. "github.com/mickael-kerjean/filestash/server/plugin/plg_handler_mcp/utils"
@@ -39,8 +41,8 @@ func (this *Server) sseHandler(_ *App, w http.ResponseWriter, r *http.Request) {
 	token := ExtractToken(r)
 	if token == "" {
 		Log.Debug("plg_handler_mcp::sse msg=invalid_token")
-		w.Header().Add("Content-Type", "application/json")
-		w.Header().Add("WWW-Authenticate", "Bearer resource_metadata=\""+this.baseURL(r)+"/.well-known/oauth-protected-resource\"")
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Www-Authenticate", "Bearer resource_metadata=\""+this.baseURL(r)+"/.well-known/oauth-protected-resource\"")
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(JSONRPCResponse{
 			JSONRPC: "2.0",
@@ -55,7 +57,7 @@ func (this *Server) sseHandler(_ *App, w http.ResponseWriter, r *http.Request) {
 	userSession := this.GetSession(uuid.New().String())
 	userSession.Token = token
 	if b, err := getBackend(userSession.Token); err == nil {
-		userSession.HomeDir, _ = model.GetHome(b, "/")
+		userSession.HomeDir, _ = GetHome(b, "/")
 		userSession.CurrDir = ToString(userSession.HomeDir, "/")
 	}
 
@@ -233,7 +235,7 @@ func getBackend(token string) (IBackend, error) {
 	if err = json.Unmarshal([]byte(str), &session); err != nil {
 		return nil, err
 	}
-	return model.NewBackend(&App{
+	return NewBackend(&App{
 		Context: context.Background(),
 	}, session)
 }

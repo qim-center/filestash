@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 
-	. "github.com/mickael-kerjean/filestash/server/common"
+	. "github.com/mickael-kerjean/filestash/server/pkg/utils"
 )
 
 type Workflow struct {
@@ -20,7 +20,7 @@ type Workflow struct {
 
 type Step struct {
 	Name   string            `json:"name"`
-	Params map[string]string `json:"params",omitzero`
+	Params map[string]string `json:"params,omitempty"`
 	Done   bool              `json:"done,omitempty"`
 }
 

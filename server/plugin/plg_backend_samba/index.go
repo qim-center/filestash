@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/hirochachacha/go-smb2"
@@ -18,9 +19,13 @@ var SambaCache AppCache
 func init() {
 	Backend.Register("samba", Samba{})
 
-	SambaCache = NewAppCache(30)
+	SambaCache = NewAppCache()
 	SambaCache.OnEvict(func(key string, value interface{}) {
 		smb := value.(*Samba)
+		if smb.inflight.Load() != 0 {
+			SambaCache.SetKey(key, smb)
+			return
+		}
 		for key, _ := range smb.share {
 			if err := smb.share[key].Umount(); err != nil {
 				Log.Warning("samba: error unmounting share: %v", err)
@@ -33,14 +38,12 @@ func init() {
 }
 
 type Samba struct {
-	session *smb2.Session
-	share   map[string]*smb2.Share
+	share    map[string]*smb2.Share
+	inflight *atomic.Int32
+	session  *smb2.Session
 }
 
 func (smb Samba) Init(params map[string]string, app *App) (IBackend, error) {
-	if c := SambaCache.Get(params); c != nil {
-		return c.(*Samba), nil
-	}
 	if strings.HasPrefix(params["host"], "smb://") == false {
 		params["host"] = "smb://" + params["host"]
 	}
@@ -62,6 +65,9 @@ func (smb Samba) Init(params map[string]string, app *App) (IBackend, error) {
 	if params["port"] == "" {
 		params["port"] = "445"
 	}
+	if c := SambaCache.Get(params); c != nil {
+		return c.(*Samba), nil
+	}
 
 	host := fmt.Sprintf("%s:%s", params["host"], params["port"])
 	conn, err := net.DialTimeout("tcp", host, 10*time.Second)
@@ -71,6 +77,7 @@ func (smb Samba) Init(params map[string]string, app *App) (IBackend, error) {
 	}
 
 	smb.share = make(map[string]*smb2.Share, 0)
+	smb.inflight = &atomic.Int32{}
 	smb.session, err = (&smb2.Dialer{
 		Initiator: &smb2.NTLMInitiator{
 			User: func() string {
@@ -194,6 +201,17 @@ func (smb Samba) Ls(path string) ([]os.FileInfo, error) {
 }
 
 func (smb Samba) Stat(path string) (os.FileInfo, error) {
+	if path == "/" {
+		for key, _ := range smb.share {
+			return File{
+				FName: key,
+				FType: "directory",
+				FTime: -1,
+				FSize: 0,
+			}, nil
+		}
+		return nil, ErrNotFound
+	}
 	share, path, err := smb.toSambaPath(path)
 	if err != nil {
 		return nil, err
@@ -207,9 +225,11 @@ func (smb Samba) Cat(path string) (io.ReadCloser, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	f, err := share.Open(path)
-	return f, fromSambaErr(err)
+	if err != nil {
+		return nil, fromSambaErr(err)
+	}
+	return NewReadahead(f, smb.inflight), nil
 }
 
 func (smb Samba) Mkdir(path string) error {
@@ -244,6 +264,8 @@ func (smb Samba) Mv(from, to string) error {
 }
 
 func (smb Samba) Save(path string, content io.Reader) error {
+	smb.inflight.Add(1)
+	defer smb.inflight.Add(-1)
 	share, path, err := smb.toSambaPath(path)
 	if err != nil {
 		return err

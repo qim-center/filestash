@@ -1,5 +1,5 @@
 import rxjs, { effect } from "../lib/rx.js";
-import { createElement, createRender } from "../lib/skeleton/index.js";
+import { createElement } from "../lib/skeleton/index.js";
 import { toHref } from "../lib/skeleton/router.js";
 import { qs, qsa, safe } from "../lib/dom.js";
 import { forwardURLParams } from "../lib/path.js";
@@ -24,7 +24,7 @@ export default async function ctrlNavigationPane(render, { $sidebar, path }) {
         else {
             const $menuitem = $fs.querySelector(`[data-path="${CSS.escape(cpath)}"] ul`);
             if (!$menuitem) break;
-            $menuitem.appendChild($ul);
+            $menuitem.replaceWith($ul);
         }
     }
     render($fs);
@@ -41,8 +41,8 @@ export default async function ctrlNavigationPane(render, { $sidebar, path }) {
         return () => cleaners.map((fn) => fn());
     }).pipe(
         rxjs.mergeMap(async(path) => {
-            const display = path === "/" ? render : createRender(qs($sidebar, `[data-path="${CSS.escape(path)}"] ul`));
-            display(await _createListOfFiles(path, {}));
+            const $ul = await _createListOfFiles(path, {});
+            qs($sidebar, `[data-path="${CSS.escape(path)}"] ul`).replaceWith($ul);
         }),
         rxjs.catchError((err) => {
             if (err instanceof DOMException) return rxjs.EMPTY;
@@ -119,6 +119,14 @@ async function _createListOfFiles(path, { basename = null, dirname = null }) {
                 <ul></ul>
             </li>
         `);
+        qs($li, "img").onclick = (e) => {
+            const $ul = qs($li, "ul");
+            $ul.classList.toggle("hidden");
+            if ($ul.hasChildNodes()) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        };
         const $link = qs($li, "a");
         if ($link.getAttribute("href") === "/files" + dirname) {
             $link.removeAttribute("href", "");

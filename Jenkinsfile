@@ -22,11 +22,10 @@ pipeline {
         stage("Build") {
             steps {
                 script {
-                    docker.image("golang:1.24-bookworm").inside("--user=root") {
-                        sh "apt update -y && apt install -y libbrotli-dev brotli"
-                        sh "sed -i 's|plg_image_c|plg_image_golang|' server/plugin/index.go"
+                    docker.image("golang:1.26-trixie").inside("--user=root") {
+                        sh "sed -i 's|plg_image_c|plg_image_golang|' server/plugin/index.go && git config --global --add safe.directory '*'"
                         sh "make init"
-                        sh "make build"
+                        sh "CGO_ENABLED=0 make build"
                     }
                 }
             }
@@ -35,7 +34,7 @@ pipeline {
             steps {
                 script {
                     // smoke test
-                    docker.image("golang:1.24-bookworm").inside("--user=root") {
+                    docker.image("golang:1.26-bookworm").inside("--user=root") {
                         sh 'timeout 5 ./dist/filestash > access.log || code=$?; if [ $code -ne 124 ]; then exit $code; fi'
                         sh "cat access.log"
                         sh "cat access.log | grep -q \"\\[http\\] starting\""
@@ -50,11 +49,12 @@ pipeline {
                         // sh "cd public && npm run test"
                     }
                     // test backend
-                    docker.image("golang:1.24-bookworm").inside("--user=root") {
-                        sh "cp ./test/assets/* /tmp/"
+                    docker.image("golang:1.26-bookworm").inside("--user=root") {
+                        sh "cp ./test/assets/* /tmp/ && git config --global --add safe.directory '*'"
+                        sh "make init"
                         sh "go generate ./test/unit_go/..."
                         sh "go get ./..."
-                        sh "go test -count=1 \$(go list ./server/... | grep -v \"server/plugin\" | grep -v \"server/generator\")"
+                        sh "CGO_ENABLED=0 go test -count=1 \$(go list ./server/... | grep -v \"server/plugin\" | grep -v \"server/generator\")"
                     }
                     // test e2e
                     docker.image("machines/puppeteer:latest").inside("--user=root") {

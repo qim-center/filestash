@@ -15,9 +15,7 @@ import (
 	"time"
 
 	. "github.com/mickael-kerjean/filestash/server/common"
-	"github.com/mickael-kerjean/filestash/server/ctrl"
 	"github.com/mickael-kerjean/filestash/server/middleware"
-	"github.com/mickael-kerjean/filestash/server/model"
 
 	"github.com/gorilla/mux"
 	"github.com/patrickmn/go-cache"
@@ -176,7 +174,7 @@ func init() {
 		can_print()
 	})
 
-	Hooks.Register.HttpEndpoint(func(r *mux.Router, app *App) error {
+	Hooks.Register.HttpEndpoint(func(r *mux.Router) error {
 		oods := r.PathPrefix("/onlyoffice").Subrouter()
 		oods.PathPrefix("/static/").HandlerFunc(StaticHandler).Methods("GET", "POST")
 		oods.HandleFunc("/event", OnlyOfficeEventHandler).Methods("POST")
@@ -281,7 +279,7 @@ func IframeContentHandler(ctx *App, res http.ResponseWriter, req *http.Request) 
 		localip                 string
 	)
 	query := req.URL.Query()
-	path, err := ctrl.PathBuilder(ctx, query.Get("path"))
+	path, err := PathBuilder(ctx, query.Get("path"))
 	if err != nil {
 		SendErrorResult(res, err)
 		return
@@ -593,7 +591,7 @@ func OnlyOfficeEventHandler(res http.ResponseWriter, req *http.Request) {
 			res.Write([]byte(`{"error": 1, "message": "couldn't fetch the document on the oods server"}`))
 			return
 		}
-		f, err := HTTPClient.Do(r)
+		f, err := HTTPClient().Do(r)
 		if err = cData.Save(cData.Path, f.Body); err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
 			res.Write([]byte(`{"error": 1, "message": "error while saving the document"}`))

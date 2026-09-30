@@ -6,9 +6,12 @@ import (
 	"io"
 	"net/http"
 	"slices"
+	"strconv"
 	"strings"
 
-	. "github.com/mickael-kerjean/filestash/server/common"
+	. "github.com/mickael-kerjean/filestash/server/pkg/kernel"
+	. "github.com/mickael-kerjean/filestash/server/pkg/core"
+	. "github.com/mickael-kerjean/filestash/server/pkg/utils"
 )
 
 func init() {
@@ -79,7 +82,7 @@ func (this *RunApi) Execute(params map[string]string, input map[string]string) (
 	for k, v := range input {
 		output[k] = v
 	}
-	output["http::status"] = string(resp.StatusCode)
+	output["http::status"] = strconv.Itoa(resp.StatusCode)
 	output["http::response"] = string(responseBody)
 	return output, nil
 }

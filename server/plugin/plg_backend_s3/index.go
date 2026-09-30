@@ -3,9 +3,15 @@ package plg_backend_s3
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
+
+	. "github.com/mickael-kerjean/filestash/server/common"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -16,21 +22,14 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/aws/aws-sdk-go/service/sts"
-	. "github.com/mickael-kerjean/filestash/server/common"
-
-	"io"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 var S3Cache AppCache
 
 type S3Backend struct {
-	client     *s3.S3
 	config     *aws.Config
 	params     map[string]string
-	Context    context.Context
+	app        *App
 	threadSize int
 	timeout    time.Duration
 }
@@ -94,8 +93,7 @@ func (this S3Backend) Init(params map[string]string, app *App) (IBackend, error)
 	backend := &S3Backend{
 		config:     config,
 		params:     params,
-		client:     s3.New(session.New(config)),
-		Context:    app.Context,
+		app:        app,
 		threadSize: threadSize,
 		timeout:    timeout,
 	}
@@ -197,7 +195,8 @@ func (this S3Backend) Ls(path string) (files []os.FileInfo, err error) {
 	files = make([]os.FileInfo, 0)
 	p := this.path(path)
 	if p.bucket == "" {
-		b, err := this.client.ListBuckets(&s3.ListBucketsInput{})
+		client := s3.New(this.newSession())
+		b, err := client.ListBucketsWithContext(this.app.Context, &s3.ListBucketsInput{})
 		if err != nil {
 			return nil, err
 		}
@@ -213,7 +212,7 @@ func (this S3Backend) Ls(path string) (files []os.FileInfo, err error) {
 	client := s3.New(this.createSession(p.bucket))
 	start := time.Now()
 	err = client.ListObjectsV2PagesWithContext(
-		this.Context,
+		this.app.Context,
 		&s3.ListObjectsV2Input{
 			Bucket:    aws.String(p.bucket),
 			Prefix:    aws.String(p.path),
@@ -264,7 +263,8 @@ func (this S3Backend) Stat(path string) (os.FileInfo, error) {
 			FType: "directory",
 		}, nil
 	} else if p.path == "" {
-		b, err := this.client.ListBuckets(&s3.ListBucketsInput{})
+		client := s3.New(this.newSession())
+		b, err := client.ListBucketsWithContext(this.app.Context, &s3.ListBucketsInput{})
 		if err != nil {
 			return nil, err
 		}
@@ -284,26 +284,39 @@ func (this S3Backend) Stat(path string) (os.FileInfo, error) {
 		Bucket: aws.String(p.bucket),
 		Key:    aws.String(p.path),
 	}
-	obj, err := client.HeadObjectWithContext(this.Context, input)
-	if err != nil {
-		awsErr, ok := err.(awserr.Error)
-		if ok == false || awsErr.Code() != "NotFound" {
-			return nil, err
+	obj, err := client.HeadObjectWithContext(this.app.Context, input)
+	if err == nil {
+		if obj.ContentLength == nil || obj.LastModified == nil {
+			return nil, ErrNotValid
 		}
 		return File{
 			FName: filepath.Base(path),
-			FType: "directory",
-			FTime: -1,
+			FType: "file",
+			FSize: (*obj.ContentLength),
+			FTime: (*obj.LastModified).Unix(),
 		}, nil
-	} else if obj.ContentLength == nil || obj.LastModified == nil {
-		return nil, ErrNotValid
+	}
+	awsErr, ok := err.(awserr.Error)
+	if !ok {
+		return nil, err
+	} else if awsErr.Code() != "NotFound" {
+		return nil, err
+	}
+	list, err := client.ListObjectsV2WithContext(this.app.Context, &s3.ListObjectsV2Input{
+		Bucket:  aws.String(p.bucket),
+		Prefix:  aws.String(EnforceDirectory(p.path)),
+		MaxKeys: aws.Int64(1),
+	})
+	if err != nil {
+		return nil, err
+	} else if list == nil || list.KeyCount == nil || *list.KeyCount == 0 {
+		return nil, ErrNotFound
 	}
 	return File{
 		FName: filepath.Base(path),
-		FType: "file",
-		FSize: (*obj.ContentLength),
-		FTime: (*obj.LastModified).Unix(),
-	}, err
+		FType: "directory",
+		FTime: -1,
+	}, nil
 }
 
 func (this S3Backend) Cat(path string) (io.ReadCloser, error) {
@@ -317,7 +330,7 @@ func (this S3Backend) Cat(path string) (io.ReadCloser, error) {
 		input.SSECustomerAlgorithm = aws.String("AES256")
 		input.SSECustomerKey = aws.String(this.params["encryption_key"])
 	}
-	obj, err := client.GetObjectWithContext(this.Context, input)
+	obj, err := client.GetObjectWithContext(this.app.Context, input)
 	if err != nil {
 		awsErr, ok := err.(awserr.Error)
 		if ok == false {
@@ -326,7 +339,7 @@ func (this S3Backend) Cat(path string) (io.ReadCloser, error) {
 		if awsErr.Code() == "InvalidRequest" && strings.Contains(awsErr.Message(), "encryption") {
 			input.SSECustomerAlgorithm = nil
 			input.SSECustomerKey = nil
-			obj, err = client.GetObject(input)
+			obj, err = client.GetObjectWithContext(this.app.Context, input)
 			return obj.Body, err
 		} else if awsErr.Code() == "InvalidArgument" && strings.Contains(awsErr.Message(), "secret key was invalid") {
 			return nil, NewError("This file is encrypted file, you need the correct key!", 400)
@@ -344,12 +357,12 @@ func (this S3Backend) Mkdir(path string) error {
 	p := this.path(path)
 	client := s3.New(this.createSession(p.bucket))
 	if p.path == "" {
-		_, err := client.CreateBucket(&s3.CreateBucketInput{
+		_, err := client.CreateBucketWithContext(this.app.Context, &s3.CreateBucketInput{
 			Bucket: aws.String(path),
 		})
 		return err
 	}
-	_, err := client.PutObject(&s3.PutObjectInput{
+	_, err := client.PutObjectWithContext(this.app.Context, &s3.PutObjectInput{
 		Bucket: aws.String(p.bucket),
 		Key:    aws.String(EnforceDirectory(p.path)),
 	})
@@ -369,7 +382,7 @@ func (this S3Backend) Rm(path string) error {
 
 	// CASE 1: remove a file
 	if finfo.IsDir() == false {
-		_, err := client.DeleteObject(&s3.DeleteObjectInput{
+		_, err := client.DeleteObjectWithContext(this.app.Context, &s3.DeleteObjectInput{
 			Bucket: aws.String(p.bucket),
 			Key:    aws.String(p.path),
 		})
@@ -378,7 +391,7 @@ func (this S3Backend) Rm(path string) error {
 	// CASE 2: remove a folder
 	jobChan := make(chan S3Path, this.threadSize)
 	errChan := make(chan error, this.threadSize)
-	ctx, cancel := context.WithCancel(this.Context)
+	ctx, cancel := context.WithCancel(this.app.Context)
 	var wg sync.WaitGroup
 	for i := 1; i <= this.threadSize; i++ {
 		wg.Add(1)
@@ -387,7 +400,7 @@ func (this S3Backend) Rm(path string) error {
 				if ctx.Err() != nil {
 					continue
 				}
-				if _, err := client.DeleteObject(&s3.DeleteObjectInput{
+				if _, err := client.DeleteObjectWithContext(ctx, &s3.DeleteObjectInput{
 					Bucket: aws.String(spath.bucket),
 					Key:    aws.String(spath.path),
 				}); err != nil {
@@ -399,7 +412,7 @@ func (this S3Backend) Rm(path string) error {
 		}()
 	}
 	err = client.ListObjectsV2PagesWithContext(
-		this.Context,
+		ctx,
 		&s3.ListObjectsV2Input{
 			Bucket: aws.String(p.bucket),
 			Prefix: aws.String(p.path),
@@ -424,7 +437,7 @@ func (this S3Backend) Rm(path string) error {
 		return err
 	}
 	if p.path == "" {
-		_, err := client.DeleteBucket(&s3.DeleteBucketInput{
+		_, err := client.DeleteBucketWithContext(ctx, &s3.DeleteBucketInput{
 			Bucket: aws.String(p.bucket),
 		})
 		return err
@@ -462,11 +475,11 @@ func (this S3Backend) Mv(from string, to string) error {
 			input.SSECustomerAlgorithm = aws.String("AES256")
 			input.SSECustomerKey = aws.String(this.params["encryption_key"])
 		}
-		_, err := client.CopyObject(input)
+		_, err := client.CopyObjectWithContext(this.app.Context, input)
 		if err != nil {
 			return err
 		}
-		_, err = client.DeleteObject(&s3.DeleteObjectInput{
+		_, err = client.DeleteObjectWithContext(this.app.Context, &s3.DeleteObjectInput{
 			Bucket: aws.String(f.bucket),
 			Key:    aws.String(f.path),
 		})
@@ -475,7 +488,7 @@ func (this S3Backend) Mv(from string, to string) error {
 	// CASE 3: Rename/Move a folder
 	jobChan := make(chan []S3Path, this.threadSize)
 	errChan := make(chan error, this.threadSize)
-	ctx, cancel := context.WithCancel(this.Context)
+	ctx, cancel := context.WithCancel(this.app.Context)
 	var wg sync.WaitGroup
 	for i := 1; i <= this.threadSize; i++ {
 		wg.Add(1)
@@ -495,13 +508,13 @@ func (this S3Backend) Mv(from string, to string) error {
 					input.SSECustomerAlgorithm = aws.String("AES256")
 					input.SSECustomerKey = aws.String(this.params["encryption_key"])
 				}
-				_, err := client.CopyObject(input)
+				_, err := client.CopyObjectWithContext(ctx, input)
 				if err != nil {
 					cancel()
 					errChan <- err
 					continue
 				}
-				_, err = client.DeleteObject(&s3.DeleteObjectInput{
+				_, err = client.DeleteObjectWithContext(ctx, &s3.DeleteObjectInput{
 					Bucket: aws.String(spath[0].bucket),
 					Key:    aws.String(spath[0].path),
 				})
@@ -515,7 +528,7 @@ func (this S3Backend) Mv(from string, to string) error {
 		}()
 	}
 	err = client.ListObjectsV2PagesWithContext(
-		this.Context,
+		ctx,
 		&s3.ListObjectsV2Input{
 			Bucket: aws.String(f.bucket),
 			Prefix: aws.String(f.path),
@@ -562,7 +575,7 @@ func (this S3Backend) Touch(path string) error {
 		input.SSECustomerAlgorithm = aws.String("AES256")
 		input.SSECustomerKey = aws.String(this.params["encryption_key"])
 	}
-	_, err := client.PutObject(input)
+	_, err := client.PutObjectWithContext(this.app.Context, input)
 	return err
 }
 
@@ -582,49 +595,6 @@ func (this S3Backend) Save(path string, file io.Reader) error {
 		input.SSECustomerAlgorithm = aws.String("AES256")
 		input.SSECustomerKey = aws.String(this.params["encryption_key"])
 	}
-	_, err := uploader.Upload(&input)
+	_, err := uploader.UploadWithContext(this.app.Context, &input)
 	return err
-}
-
-func (this S3Backend) createSession(bucket string) *session.Session {
-	if this.params["region"] == "" {
-		newParams := map[string]string{"bucket": bucket}
-		for k, v := range this.params {
-			newParams[k] = v
-		}
-		if c := S3Cache.Get(newParams); c == nil {
-			res, err := this.client.GetBucketLocation(&s3.GetBucketLocationInput{
-				Bucket: aws.String(bucket),
-			})
-			if err == nil && res.LocationConstraint != nil {
-				this.config.Region = res.LocationConstraint
-			}
-			S3Cache.Set(newParams, this.config.Region)
-		} else {
-			this.config.Region = c.(*string)
-		}
-	}
-	sess := session.New(this.config)
-	return sess
-}
-
-type S3Path struct {
-	bucket string
-	path   string
-}
-
-func (s S3Backend) path(p string) S3Path {
-	sp := strings.Split(p, "/")
-	bucket := ""
-	if len(sp) > 1 {
-		bucket = sp[1]
-	}
-	path := ""
-	if len(sp) > 2 {
-		path = strings.Join(sp[2:], "/")
-	}
-	return S3Path{
-		bucket,
-		path,
-	}
 }

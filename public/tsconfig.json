@@ -10,7 +10,6 @@
         "isolatedModules": true,
         "noEmit": true,
         "noErrorTruncation": true,
-        "noFallthroughCasesInSwitch": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "noImplicitOverride": true,
@@ -30,6 +29,7 @@
             "es2022"
         ],
         "module": "es2022",
+        "moduleResolution": "bundler",
         "target": "es2022",
         "typeRoots": []
     },

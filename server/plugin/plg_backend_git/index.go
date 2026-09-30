@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing"
+	"github.com/go-git/go-git/v6/plumbing/client"
 	"github.com/go-git/go-git/v6/plumbing/object"
 	"github.com/go-git/go-git/v6/plumbing/transport"
 	"github.com/go-git/go-git/v6/plumbing/transport/http"
@@ -350,7 +351,7 @@ func (g *GitLib) open(params *GitParams, path string) (*git.Repository, error) {
 			Depth:         1,
 			ReferenceName: plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", g.params.branch)),
 			SingleBranch:  true,
-			Auth:          auth,
+			ClientOptions: auth,
 		})
 		if err == transport.ErrEmptyRemoteRepository {
 			return g, nil
@@ -392,7 +393,7 @@ func (g *GitLib) save(message string) error {
 		return err
 	}
 	return g.repo.Push(&git.PushOptions{
-		Auth: auth,
+		ClientOptions: auth,
 	})
 }
 
@@ -404,12 +405,12 @@ func (g *GitLib) refresh() error {
 	return w.Pull(&git.PullOptions{RemoteName: "origin"})
 }
 
-func (g *GitLib) auth() (transport.AuthMethod, error) {
+func (g *GitLib) auth() ([]client.Option, error) {
 	if strings.HasPrefix(g.params.repo, "http") {
-		return &http.BasicAuth{
+		return []client.Option{client.WithHTTPAuth(&http.BasicAuth{
 			Username: g.params.username,
 			Password: g.params.password,
-		}, nil
+		})}, nil
 	}
 	isPrivateKey := func(pass string) bool {
 		if len(pass) > 1000 && strings.HasPrefix(pass, "-----") {
@@ -423,22 +424,22 @@ func (g *GitLib) auth() (transport.AuthMethod, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &sshgit.PublicKeys{
+		return []client.Option{client.WithSSHAuth(&sshgit.PublicKeys{
 			User:   "git",
 			Signer: signer,
 			HostKeyCallbackHelper: sshgit.HostKeyCallbackHelper{
 				HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 			},
-		}, nil
+		})}, nil
 	}
 
-	return &sshgit.Password{
+	return []client.Option{client.WithSSHAuth(&sshgit.Password{
 		User:     g.params.username,
 		Password: g.params.password,
 		HostKeyCallbackHelper: sshgit.HostKeyCallbackHelper{
 			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		},
-	}, nil
+	})}, nil
 }
 
 func (g *GitLib) message(action string, path string) string {
